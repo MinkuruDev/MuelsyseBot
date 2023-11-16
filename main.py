@@ -123,7 +123,6 @@ async def edit_command(message, flags):
     except Exception as e:
         await message.channel.send(f"An error occurred: {e}")
 
-
 async def timeout_command(message, flags):
     args = flags.get('_args', [])
 
@@ -218,6 +217,7 @@ COMMAND_MAP = {
     'edit' : edit_command
     # ... add other commands as needed
 }
+PING_CHANNEL_ID = 1174532883420024893
 
 @client.event
 async def on_ready():
@@ -225,8 +225,14 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.author == client.user:
+    if message.author == client.user or message.author.bot:
         return
+
+    if client.user.mentioned_in(message):
+        pinged_channel = client.get_channel(PING_CHANNEL_ID)
+        if pinged_channel:
+            ping_message = f"<@{ALLOWED_ID}> Muelsyse got memtioned at {message.jump_url}"
+            await pinged_channel.send(ping_message)
 
     if message.content.startswith('mdo'):
         if message.author.id != ALLOWED_ID:

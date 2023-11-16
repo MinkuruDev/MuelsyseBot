@@ -1,0 +1,53 @@
+{
+    "edit": {
+        "description": "Edit a message using its ID and optionally replace its content with the content of a Markdown file.",
+        "usage": "mdo edit CHANNEL_ID MSG_ID [--md-file FILENAME] [CONTEXT]",
+        "args": {
+            "CHANNEL_ID": "The ID of the channel contain the message",
+            "MSG_ID": "The ID of the message to be edited.",
+            "CONTEXT": "Optional. Additional text to be appended to the existing or replaced content."
+        },
+        "flags": {
+            "--md-file": "Optional. Specify the Markdown file to replace the content of the message."
+        }
+    },
+    "announcement": {
+        "description": "Send the content of the 'announcement.md' file to a specific channel.",
+        "usage": "mdo announcement"
+    },
+    "facebook": {
+        "description": "Send the content of the 'facebook.md' file to a specific channel.",
+        "usage": "mdo facebook"
+    },
+    "help": {
+        "description": "Get detailed information about a specific command or a list of available commands.",
+        "usage": "mdo help [command_name]",
+        "args": {
+            "command_name": "Optional. The name of the command you want details on. If not provided, a list of all available commands with brief descriptions will be shown."
+        }
+    },
+    "send": {
+        "description": "Send a message, content of a text file, or an image.",
+        "usage": "mdo send [--channel-id CHANNEL_ID] [--md-file FILENAME | --image FILENAME] MESSAGE_TEXT",
+        "args": {
+            "MESSAGE_TEXT": "The direct message text to be sent. If a file is specified using flags, this text will accompany the file."
+        },
+        "flags": {
+            "--channel-id": "Optional. Specify the target channel ID. If not provided, the message or file will be sent to the current channel.",
+            "--image": "Optional. Send an image from the './mdo/' directory. Provide the filename with the extension (example: cannot_save.png).",
+            "--md-file": "Optional. Send the content of a Markdown file from the './mdo/' directory. Provide the filename without '.md' extension."
+        }
+    },
+    "timeout": {
+        "description": "Timeout a member for the specified duration. The member will not be able to send messages during the timeout period.",
+        "usage": "mdo timeout [member_id] [duration] [reason] --noti-channel [channel_id]",
+        "args": {
+            "member_id": "The ID of the member to be timed out.",
+            "duration": "The duration of the timeout. Use d for days, h for hours, m for minutes, and s for seconds. For example, 1d2h30m for 1 day, 2 hours, and 30 minutes.",
+            "reason": "Optional. The reason for the timeout."
+        },
+        "flags": {
+            "--noti-channel": "Optional. Specify a channel ID to send the timeout notification to this channel instead of the default channel."
+        }
+    }
+}

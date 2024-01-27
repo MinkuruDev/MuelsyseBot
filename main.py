@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -222,6 +223,11 @@ PING_CHANNEL_ID = 1174532883420024893
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
+
+@client.event
+async def on_member_join(member):
+    print("a member has join")
+    await member.edit(nick="Muelsyse Clone")
 
 @client.event
 async def on_message(message):

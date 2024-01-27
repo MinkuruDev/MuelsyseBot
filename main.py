@@ -219,6 +219,7 @@ COMMAND_MAP = {
     # ... add other commands as needed
 }
 PING_CHANNEL_ID = 1174532883420024893
+MMM_SERVER_ID = 1160783653413068872
 
 @client.event
 async def on_ready():
@@ -226,8 +227,8 @@ async def on_ready():
 
 @client.event
 async def on_member_join(member):
-    print("a member has join")
-    await member.edit(nick="Muelsyse Clone")
+    if member.guild.id == MMM_SERVER_ID:
+        await member.edit(nick="Muelsyse Clone")
 
 @client.event
 async def on_message(message):

@@ -1,4 +1,2 @@
-<@759015913747120160> Nhận 300k exp từ việc giveaway 1500k owo + có role (@&Rhine Lab Buisiness Section)
-(Từ level 28 1188 exp -> level 54 5636 exp)
-<@754931773154000897> Nhận 200k exp từ việc giveaway 1000k owo + có role (@&Rhine Lab Buisiness Section)
-(Từ level 73 7339 exp -> level 82 12939 exp)
+<@573868351483412511> Nhận 30k exp từ việc giveaway 300k owo
+(Từ level 6 1656 exp -> level 16 1856 exp)

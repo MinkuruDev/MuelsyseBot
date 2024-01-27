@@ -15,8 +15,8 @@ MBOT_COMMAND_MAP = mbot_commands.MBOT_COMMAND_MAP
 async def on_ready():
     print(f'We have logged in as {client.user}')
     if global_vars.RELEASE != 0:
-        mdo_commands.edit_nickname_command(client, None, None)
-        mdo_commands.birthday_command(client, None, None)
+        await mdo_commands.edit_nickname_command(client, None, None)
+        await mdo_commands.birthday_command(client, None, None)
 
 @client.event
 async def on_member_join(member):

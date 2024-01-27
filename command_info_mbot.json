@@ -1,0 +1,25 @@
+{
+    "help": {
+        "description": "Get detailed information about a specific command or a list of available commands.",
+        "usage": "mbot help [command_name]",
+        "args": {
+            "command_name": "Optional. The name of the command you want details on. If not provided, a list of all available commands with brief descriptions will be shown."
+        }
+    },
+    "birthday_set": {
+        "description": "Set your birthday",
+        "usage": "mbot birthday_set DD MM",
+        "args": {
+            "DD": "Day (1-31)",
+            "MM": "Month (1-12)"
+        }
+    },
+    "birthday_confirm": {
+        "description": "Confirm your birthday after **birthday_set**",
+        "usage": "mbot birthday_confirm"
+    },
+    "birthday_cancel": {
+        "description": "Cancel your birthday after **birthday_set**",
+        "usage": "mbot birthday_cancel"
+    }
+}

@@ -12,11 +12,11 @@
         }
     },
     "announcement": {
-        "description": "Send the content of the 'announcement.md' file to a specific channel.",
+        "description": "Send the content of the 'announcement.md' file to Announcement channel.",
         "usage": "mdo announcement"
     },
     "facebook": {
-        "description": "Send the content of the 'facebook.md' file to a specific channel.",
+        "description": "Send the content of the 'facebook.md' file to Facebook channel.",
         "usage": "mdo facebook"
     },
     "help": {
@@ -49,5 +49,13 @@
         "flags": {
             "--noti-channel": "Optional. Specify a channel ID to send the timeout notification to this channel instead of the default channel."
         }
+    },
+    "nickname": {
+        "description": "Set nickname of all member (exclude bot) to **Muelsyse Clone**",
+        "usage": "mdo nickname"
+    },
+    "birthday": {
+        "description": "Set/remove birthday role from members depend on date that command was execute",
+        "usage": "mdo birthday"
     }
 }

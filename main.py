@@ -2,21 +2,24 @@ import discord
 import global_vars
 import mdo_commands
 import mbot_commands
+import slash_commands
 
-intents = discord.Intents.default()
-intents.message_content = True
-intents.members = True
-client = discord.Client(intents=intents)
+client = global_vars.client
+tree = slash_commands.tree
 
 COMMAND_MAP = mdo_commands.COMMAND_MAP
 MBOT_COMMAND_MAP = mbot_commands.MBOT_COMMAND_MAP
 
 @client.event
 async def on_ready():
+    await tree.sync(guild=discord.Object(id=global_vars.MMM_SERVER_ID))
     print(f'We have logged in as {client.user}')
     if global_vars.RELEASE != 0:
+        print('Running in RELEASE mode')
         await mdo_commands.edit_nickname_command(client, None, None)
         await mdo_commands.birthday_command(client, None, None)
+    else:
+        print("Running in DEBUG mode")
 
 @client.event
 async def on_member_join(member):

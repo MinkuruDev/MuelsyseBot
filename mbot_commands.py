@@ -8,7 +8,7 @@ from datetime import datetime
 pending_birthday = {}
 
 # Load the command info from the JSON file
-with open('command_info_mbot.json', 'r') as f:
+with open(global_vars.WORKDIR + 'command_info_mbot.json', 'r') as f:
     COMMAND_INFO = json.load(f)
 
 def exist_date(d, m):

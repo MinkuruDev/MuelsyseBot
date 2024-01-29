@@ -1,2 +1,2 @@
-<@573868351483412511> Nhận 30k exp từ việc giveaway 300k owo
-(Từ level 6 1656 exp -> level 16 1856 exp)
+<@754931773154000897> Nhận 100k exp từ việc giveaway 500k owo + có level 32
+(Từ level 85 21057 exp -> level 89 24017 exp)

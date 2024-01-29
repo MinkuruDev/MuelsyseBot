@@ -8,7 +8,7 @@ import global_vars
 from datetime import datetime, timedelta, timezone
 
 # Load the command info from the JSON file
-with open('command_info.json', 'r') as f:
+with open(global_vars.WORKDIR + 'command_info.json', 'r') as f:
     COMMAND_INFO = json.load(f)
 
 birthday_data = {}
@@ -45,7 +45,7 @@ async def send_command(client, message, flags):
     target_channel = client.get_channel(target_channel_id)
 
     if "--md-file" in flags:
-        file_name = f"./mdo/{flags['--md-file']}.md"
+        file_name = f"{global_vars.WORKDIR}mdo/{flags['--md-file']}.md"
         try:
             with open(file_name, 'r', encoding="utf-8") as file:
                 content = file.read()
@@ -55,7 +55,7 @@ async def send_command(client, message, flags):
         except Exception as e:
             await message.channel.send(f"An error occurred: {e}")
     elif "--image" in flags:
-        image_path = f"./mdo/{flags['--image']}"
+        image_path = f"{global_vars.WORKDIR}mdo/{flags['--image']}"
         try:
             await target_channel.send(file=discord.File(image_path))
         except FileNotFoundError:
@@ -98,7 +98,7 @@ async def edit_command(client, message, flags):
         md_file = flags.get('--md-file')
         if md_file:
             # Read content from the Markdown file
-            file_name = f"./mdo/{md_file}.md"
+            file_name = f"{global_vars.WORKDIR}mdo/{md_file}.md"
             with open(file_name, 'r', encoding="utf-8") as file:
                 context = file.read()
         else:
@@ -168,7 +168,7 @@ async def timeout_command(client, message, flags):
 async def facebook_command(client, message, flags):
     channel_id = global_vars.FACEBOOK_CHANNEL_ID  # Specify the target channel ID
 
-    file_name = "./mdo/facebook.md"
+    file_name = "{global_vars.WORKDIR}mdo/facebook.md"
     try:
         with open(file_name, 'r', encoding="utf-8") as file:
             content = file.read()
@@ -186,7 +186,7 @@ async def facebook_command(client, message, flags):
 async def announcement_command(client, message, flags):
     channel_id = global_vars.ANNOUNCEMENT_CHANNEL_ID  # Specify the target announcement channel ID
 
-    file_name = "./mdo/announcement.md"
+    file_name = "{global_vars.WORKDIR}mdo/announcement.md"
     try:
         with open(file_name, 'r', encoding="utf-8") as file:
             content = file.read()

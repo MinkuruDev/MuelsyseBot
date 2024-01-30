@@ -245,11 +245,12 @@ async def birthday_command(client, message, flag):
 async def assign_birthday(client, uid):
     # Add birthday role and announce if member has birthday today but doesn't have the role
     guild = client.get_guild(global_vars.MMM_SERVER_ID)
-    birthday_announcement_channel = client.get_channel(global_vars.BIRTHDAY_ANNOUNCEMENT_CHANNEL_ID)
-    role = guild.get_role(global_vars.BIRTHDAY_ROLE_ID)
     member = await guild.fetch_member(uid)
     if not member:
         print(f"{uid} not in guild")
+        return
+    birthday_announcement_channel = client.get_channel(global_vars.BIRTHDAY_ANNOUNCEMENT_CHANNEL_ID)
+    role = guild.get_role(global_vars.BIRTHDAY_ROLE_ID)
     await member.add_roles(role)
     await birthday_announcement_channel.send(f"Happy Birthday, {member.mention}!")
 

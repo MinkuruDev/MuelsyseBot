@@ -168,7 +168,7 @@ async def timeout_command(client, message, flags):
 async def facebook_command(client, message, flags):
     channel_id = global_vars.FACEBOOK_CHANNEL_ID  # Specify the target channel ID
 
-    file_name = "{global_vars.WORKDIR}mdo/facebook.md"
+    file_name = f"{global_vars.WORKDIR}mdo/facebook.md"
     try:
         with open(file_name, 'r', encoding="utf-8") as file:
             content = file.read()
@@ -186,7 +186,7 @@ async def facebook_command(client, message, flags):
 async def announcement_command(client, message, flags):
     channel_id = global_vars.ANNOUNCEMENT_CHANNEL_ID  # Specify the target announcement channel ID
 
-    file_name = "{global_vars.WORKDIR}mdo/announcement.md"
+    file_name = f"{global_vars.WORKDIR}mdo/announcement.md"
     try:
         with open(file_name, 'r', encoding="utf-8") as file:
             content = file.read()

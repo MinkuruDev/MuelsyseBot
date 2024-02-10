@@ -1,8 +1,10 @@
+import asyncio
 import discord
 import global_vars
 import mdo_commands
 import mbot_commands
 import slash_commands
+import daily
 
 client = global_vars.client
 tree = slash_commands.tree
@@ -10,14 +12,19 @@ tree = slash_commands.tree
 COMMAND_MAP = mdo_commands.COMMAND_MAP
 MBOT_COMMAND_MAP = mbot_commands.MBOT_COMMAND_MAP
 
+async def do_daily():
+    await mdo_commands.edit_nickname_command(client, None, None)
+    await mdo_commands.birthday_command(client, None, None)
+    print("Executed daily task at:", daily.get_utc_plus_7_time())
+
 @client.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=global_vars.MMM_SERVER_ID))
     print(f'We have logged in as {client.user}')
+    asyncio.create_task(daily.daily(do_daily))
     if global_vars.RELEASE != 0:
         print('Running in RELEASE mode')
-        await mdo_commands.edit_nickname_command(client, None, None)
-        await mdo_commands.birthday_command(client, None, None)
+        await do_daily()
     else:
         print("Running in DEBUG mode")
 

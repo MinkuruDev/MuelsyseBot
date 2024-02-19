@@ -1,14 +1,12 @@
 import os
 import discord
 
-from dotenv import load_dotenv
 from discord import app_commands
 
-load_dotenv()
-TOKEN = os.getenv("TOKEN")
-ALLOWED_ID = int(os.getenv("ALLOWED_ID"))
-RELEASE = int(os.getenv("RELEASE"))
-WORKDIR = os.getenv("WORKDIR")
+TOKEN = os.environ.get("TOKEN")
+ALLOWED_ID = int(os.environ.get("ALLOWED_ID"))
+RELEASE = int(os.environ.get("RELEASE"))
+WORKDIR = os.environ.get("WORKDIR")
 
 # command server
 PING_CHANNEL_ID = 1174532883420024893

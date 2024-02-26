@@ -17,11 +17,32 @@ async def do_daily():
     await mdo_commands.birthday_command(client, None, None)
     print("Executed daily task at:", daily.get_utc_plus_7_time())
 
+async def list_custom_roles():
+    guild = client.get_guild(global_vars.MMM_SERVER_ID)
+    roles = guild.roles[::-1] # Reverse the roles list to iterate from top to bottom
+    custom_role = False
+    for role in roles:
+        if role.id == global_vars.BIRTHDAY_ROLE_ID:
+            custom_role = True
+            continue
+        if not custom_role:
+            continue
+        if role.id == global_vars.SERVER_BOOSTER_ROLE_ID:
+            break
+        if len(role.members) == 0:
+            continue
+        mem = role.members[0]
+        slash_commands.custom_roles[mem.id] = role.id
+
+async def start_up():
+    await list_custom_roles()
+
 @client.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=global_vars.MMM_SERVER_ID))
     print(f'We have logged in as {client.user}')
     asyncio.create_task(daily.daily(do_daily))
+    await start_up()
     if global_vars.RELEASE != 0:
         print('Running in RELEASE mode')
         await do_daily()

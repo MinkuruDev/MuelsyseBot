@@ -42,9 +42,9 @@ async def on_ready():
     await tree.sync(guild=discord.Object(id=global_vars.MMM_SERVER_ID))
     print(f'We have logged in as {client.user}')
     asyncio.create_task(daily.daily(do_daily))
-    await start_up()
     if global_vars.RELEASE != 0:
         print('Running in RELEASE mode')
+        await start_up()
         await do_daily()
     else:
         print("Running in DEBUG mode")

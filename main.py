@@ -72,7 +72,7 @@ async def on_message(message):
             return
         
         # Command handler
-        command_parts = message.content.split()
+        command_parts = message.content.split(" ")
         command = command_parts[1] if len(command_parts) > 1 else None
 
         # Flags handler

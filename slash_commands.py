@@ -28,6 +28,7 @@ async def birthdy_get_slash(interaction, user: discord.Member = None):
     else:
         uid = user.id
     
+    uid = str(uid)
     if uid not in mdo_commands.birthday_data:
         await interaction.response.send_message(f"<@{uid}> birthday is not set")
     else:

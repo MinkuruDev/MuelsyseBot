@@ -219,11 +219,9 @@ async def birthday_command(client, message, flag):
     birthday_info_channel = client.get_channel(global_vars.BIRTHDAY_DATA_CHANNEL_ID)
     guild = client.get_guild(global_vars.MMM_SERVER_ID)
 
-    # Retrieve and parse birthday information from birthday_info_channel
-    async for message in birthday_info_channel.history(limit=None):
-        mem_id, day, month = map(int, message.content.split())
-        # Store the birthday information in the dictionary
-        birthday_data[mem_id] = (day, month)
+    global birthday_data
+    birthday_data = global_vars.all_birthday_ref.get().to_dict()
+    # print(birthday_data)
 
     # Get current time in UTC+7
     current_time_utc7 = datetime.now(pytz.timezone('Asia/Bangkok'))
@@ -233,13 +231,14 @@ async def birthday_command(client, message, flag):
         # Check if the member has the birthday role
         has_birthday_role = discord.utils.get(member.roles, id=global_vars.BIRTHDAY_ROLE_ID) is not None
 
-        if member.id in birthday_data:
-            member_birthday = birthday_data[member.id]
+        str_id = str(member.id)
+        if str_id in birthday_data:
+            member_birthday = birthday_data[str_id]
 
-            if has_birthday_role and member_birthday != (current_time_utc7.day, current_time_utc7.month):
+            if has_birthday_role and member_birthday != [current_time_utc7.day, current_time_utc7.month]:
                 # Remove birthday role if member has it but today is not their birthday
                 await member.remove_roles(discord.Object(global_vars.BIRTHDAY_ROLE_ID))
-            elif not has_birthday_role and member_birthday == (current_time_utc7.day, current_time_utc7.month):
+            elif not has_birthday_role and member_birthday == [current_time_utc7.day, current_time_utc7.month]:
                 await assign_birthday(client, member.id)
 
 async def assign_birthday(client, uid):

@@ -90,7 +90,9 @@ async def birthday_set_confirm(client, message, flag):
     await birthday_info_channel.send(f"{user_id} {dd} {mm}")
 
     # Set mdo_commands.birthday_data of uid
-    mdo_commands.birthday_data[user_id] = (dd, mm)
+    str_id = str(user_id)
+    mdo_commands.birthday_data[str_id] = [dd, mm]
+    global_vars.all_birthday_ref.update({str_id: [dd, mm]})
     await message.channel.send(f"{message.author.mention} Birthday confirmed!")
 
     current_time_utc7 = datetime.now(pytz.timezone('Asia/Bangkok'))

@@ -1,8 +1,10 @@
 import os
 import discord
+import firebase_admin
 
 from dotenv import load_dotenv
 from discord import app_commands
+from firebase_admin import credentials, firestore
 
 load_dotenv()
 TOKEN = os.environ.get("TOKEN")
@@ -30,8 +32,15 @@ FACEBOOK_NOTIFICATION_ROLE_ID = 1167712584720453642
 SHWM_PAGE_ID = 176226312250666
 MWC_PAGE_ID = 107355032425494
 
+# Discord client
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+
+# Firestore database
+cred = credentials.Certificate(f'{WORKDIR}serviceAccountKey.json')
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+all_birthday_ref = db.collection("Birthday").document("AllBirthday")

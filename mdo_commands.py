@@ -1,10 +1,11 @@
 import re
 import json
 import discord
-from discord.ext import commands
 import pytz
 import global_vars
+import requests
 
+from discord.ext import commands
 from datetime import datetime, timedelta, timezone
 
 # Load the command info from the JSON file
@@ -166,20 +167,41 @@ async def timeout_command(client, message, flags):
         await message.channel.send(f"An error occurred: {e}")
 
 async def facebook_command(client, message, flags):
-    channel_id = global_vars.FACEBOOK_CHANNEL_ID  # Specify the target channel ID
+    channel_id = global_vars.FACEBOOK_CHANNEL_ID  if global_vars.RELEASE == 1 else 898119095143260203
+    url = "https://graph.facebook.com"
 
-    file_name = f"{global_vars.WORKDIR}mdo/facebook.md"
     try:
-        with open(file_name, 'r', encoding="utf-8") as file:
-            content = file.read()
-            target_channel = client.get_channel(channel_id)
+        params = {
+            "limit": "1",
+            "access_token": global_vars.FB_ACCESS_TOKEN
+        }
+        resp = requests.get(f"{url}/MuelsyseClone/feed", params)
+        obj = json.loads(resp.text)
+        post_id = obj.get("data")[0].get("id")
 
-            if target_channel:
-                await target_channel.send(content)
+        params = {
+            "fields": "permalink_url",
+            "access_token": global_vars.FB_ACCESS_TOKEN
+        }
+
+        resp = requests.get(f"{url}/{post_id}", params)
+        obj = json.loads(resp.text)
+        post_url = obj.get("permalink_url")
+
+        args = flags.get('_args', [])
+        scopes = f"<@&{global_vars.FACEBOOK_NOTIFICATION_ROLE_ID}>"
+        if len(args) > 0:
+            if args[0] == "everyone":
+                scopes = "@everyone Sorry for the ping but this is important"
             else:
-                await message.channel.send(f"Target channel not found.")
-    except FileNotFoundError:
-        await message.channel.send(f"File {file_name} not found.")
+                for some_id in args:
+                    scopes += f"<@{some_id}>"
+        
+        noti_channel = client.get_channel(channel_id)
+        msg = f"{scopes}\nMuelsyse's water clone just posted !!!\n{post_url}"
+
+        await noti_channel.send(msg)
+
     except Exception as e:
         await message.channel.send(f"An error occurred: {e}")
 

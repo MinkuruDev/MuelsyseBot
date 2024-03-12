@@ -11,6 +11,7 @@ TOKEN = os.environ.get("TOKEN")
 ALLOWED_ID = int(os.environ.get("ALLOWED_ID"))
 RELEASE = int(os.environ.get("RELEASE"))
 WORKDIR = os.environ.get("WORKDIR")
+FB_ACCESS_TOKEN = os.getenv("FB_ACCESS_TOKEN")
 
 # command server
 PING_CHANNEL_ID = 1174532883420024893

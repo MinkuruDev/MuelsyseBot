@@ -66,7 +66,7 @@ async def on_message(message):
             await pinged_channel.send(ping_message)
 
     is_mdo = message.content.startswith('mdo')
-    if is_mdo or message.content.startswith('mbot'):
+    if is_mdo or message.content[:4].lower() == 'mbot':
         if message.author.id != global_vars.ALLOWED_ID and is_mdo:
             await message.channel.send(f"<@{message.author.id}> you don't have permission to use this command.")
             return

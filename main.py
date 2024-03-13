@@ -13,7 +13,7 @@ COMMAND_MAP = mdo_commands.COMMAND_MAP
 MBOT_COMMAND_MAP = mbot_commands.MBOT_COMMAND_MAP
 
 async def do_daily():
-    await mdo_commands.edit_nickname_command(client, None, None)
+    await mdo_commands.edit_nickname_command(client, None, {})
     await mdo_commands.birthday_command(client, None, None)
     print("Executed daily task at:", daily.get_utc_plus_7_time())
 

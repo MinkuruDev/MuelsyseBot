@@ -4,6 +4,8 @@ import discord
 import pytz
 import global_vars
 import requests
+import os
+import random
 
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
@@ -224,16 +226,20 @@ async def announcement_command(client, message, flags):
         await message.channel.send(f"An error occurred: {e}")
 
 async def edit_nickname_command(client, message, flags):
-    guild = client.get_guild(global_vars.MMM_SERVER_ID)
+    guild_id = flags.get("--guild-id", global_vars.MMM_SERVER_ID)
+    guild = client.get_guild(int(guild_id))
+    args = flags.get("_args", [])
+    nick = "Muelsyse Clone" if len(args) == 0 else " ".join(args)
 
     if guild:
         members = guild.members
+        owner_id = guild.owner.id
         for member in members:
-            if member.bot:
+            if member.bot or member.id == owner_id:
                 continue
-            if member.nick != "Muelsyse Clone":
-                print(f"{member.name}: {member.nick} --> Muelsyse Clone")
-                await member.edit(nick="Muelsyse Clone")
+            if member.nick != nick:
+                print(f"{member.name}: {member.nick} --> {nick}")
+                await member.edit(nick=nick)
     else:
         print('Guild not found.')
 
@@ -273,7 +279,22 @@ async def assign_birthday(client, uid):
     birthday_announcement_channel = client.get_channel(global_vars.BIRTHDAY_ANNOUNCEMENT_CHANNEL_ID)
     role = guild.get_role(global_vars.BIRTHDAY_ROLE_ID)
     await member.add_roles(role)
-    await birthday_announcement_channel.send(f"Happy Birthday, {member.mention}!")
+
+    file_name = random.choice(os.listdir(f"{global_vars.WORKDIR}mdo/birthday"))
+    file_path = f"{global_vars.WORKDIR}mdo/birthday/{file_name}"
+    try:
+        with open(file_path, 'r', encoding="utf-8") as file:
+            content = file.read()
+            kw_args = {
+                "member_count": guild.member_count,
+                "member": f"<@{uid}>"
+            }
+            msg = content.format(**kw_args)
+            await birthday_announcement_channel.send(msg) 
+    except FileNotFoundError:
+        print(f"File {file_path} not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 COMMAND_MAP = {
     'send': send_command,

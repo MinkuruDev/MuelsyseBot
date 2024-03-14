@@ -97,7 +97,7 @@ async def birthday_set_confirm(client, message, flag):
 
     current_time_utc7 = datetime.now(pytz.timezone('Asia/Bangkok'))
     if (dd, mm) == (current_time_utc7.day, current_time_utc7.month):
-        await mdo_commands.assign_birthday(client, user_id)
+        await mdo_commands.assign_birthday(client, user_id, current_time_utc7)
 
 async def birthday_set_cancel(client, message, flag):
     if message.author.id not in pending_birthday:

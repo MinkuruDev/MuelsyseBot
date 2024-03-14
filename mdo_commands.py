@@ -267,9 +267,9 @@ async def birthday_command(client, message, flag):
                 # Remove birthday role if member has it but today is not their birthday
                 await member.remove_roles(discord.Object(global_vars.BIRTHDAY_ROLE_ID))
             elif not has_birthday_role and member_birthday == [current_time_utc7.day, current_time_utc7.month]:
-                await assign_birthday(client, member.id)
+                await assign_birthday(client, member.id, current_time_utc7)
 
-async def assign_birthday(client, uid):
+async def assign_birthday(client, uid, current_time_utc7):
     # Add birthday role and announce if member has birthday today but doesn't have the role
     guild = client.get_guild(global_vars.MMM_SERVER_ID)
     member = await guild.fetch_member(uid)
@@ -287,7 +287,9 @@ async def assign_birthday(client, uid):
             content = file.read()
             kw_args = {
                 "member_count": guild.member_count,
-                "member": f"<@{uid}>"
+                "member": f"<@{uid}>",
+                "day": current_time_utc7.day,
+                "month": current_time_utc7.month,
             }
             msg = content.format(**kw_args)
             await birthday_announcement_channel.send(msg) 

@@ -51,7 +51,7 @@ async def help_command(client, message, flags):
 
 async def birthday_set_command(client, message, flag):
     args = flag.get('_args', [])
-    if message.author.id in mdo_commands.birthday_data:
+    if str(message.author.id) in mdo_commands.birthday_data:
         await message.channel.send(f"{message.author.mention} you cannot set birthday twice")
         return
     if len(args) != 2:

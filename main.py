@@ -52,7 +52,7 @@ async def on_ready():
 @client.event
 async def on_member_join(member):
     if member.guild.id == global_vars.MMM_SERVER_ID:
-        await member.edit(nick="Muelsyse Clone")
+        await member.edit(nick=global_vars.SERVER_NICKNAME)
 
 @client.event
 async def on_message(message):

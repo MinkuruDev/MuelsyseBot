@@ -229,7 +229,9 @@ async def edit_nickname_command(client, message, flags):
     guild_id = flags.get("--guild-id", global_vars.MMM_SERVER_ID)
     guild = client.get_guild(int(guild_id))
     args = flags.get("_args", [])
-    nick = "Muelsyse Clone" if len(args) == 0 else " ".join(args)
+    if len(args) > 0:
+        global_vars.SERVER_NICKNAME = " ".join(args)
+    nick = global_vars.SERVER_NICKNAME
 
     if guild:
         members = guild.members

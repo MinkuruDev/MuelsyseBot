@@ -33,6 +33,8 @@ FACEBOOK_NOTIFICATION_ROLE_ID = 1167712584720453642
 SHWM_PAGE_ID = 176226312250666
 MWC_PAGE_ID = 107355032425494
 
+SERVER_NICKNAME = "Muelsyse Clone"
+
 # Discord client
 intents = discord.Intents.default()
 intents.message_content = True

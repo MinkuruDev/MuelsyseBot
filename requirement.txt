@@ -3,3 +3,4 @@ pytz
 python-dotenv
 firebase-admin
 requests
+emoji

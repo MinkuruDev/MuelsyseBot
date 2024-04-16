@@ -2,6 +2,8 @@ import discord
 import global_vars
 import mdo_commands
 import mbot_commands
+import emoji as emoji_lib
+import re
 
 client = global_vars.client
 tree = global_vars.tree
@@ -99,25 +101,35 @@ async def role_color_slash(interaction, hex_color:str):
 )
 async def role_icon_slash(interaction, emoji:str):
     user = interaction.user
+    if emoji in emoji_lib.EMOJI_DATA:
+        role = discord.utils.get(user.roles, id=custom_roles.get(user.id))
+        await role.edit(display_icon=emoji)
+        await interaction.response.send_message(f"{user.mention} your custom role icon edited successfully")
+        return
+
     if user.id not in custom_roles:
-        await interaction.response.send_message(f"{user.mention} you don't have a custom role (use **/cr_create** to create one)")
+        await interaction.response.send_message(f"{user.mention} you don't have a custom role\n(use **/cr_create** to create one)")
         return
     
     if emoji.startswith("<a:"):
-        await interaction.response.send_message(f"{user.mention} invalid emoji, please use STATIC emoji from THIS SERVER")
+        await interaction.response.send_message(f"{user.mention} invalid emoji, please use a STATIC emoji\n(You are using animated emoji)")
         return
 
-    parts = emoji.split(":")
-    if len(parts) < 2:
-        await interaction.response.send_message(f"{user.mention} invalid emoji, please use STATIC emoji from THIS SERVER")
+    if not re.match(r"<:(\w+):(\d+)>", emoji):
+        await interaction.response.send_message(f"{user.mention} invalid emoji")
         return
     
-    emoji = parts[1]
-    e = discord.utils.get(user.guild.emojis, name=emoji)
+    parts = emoji.split(":")
+    eid = int(parts[2][:-1])
+    e = discord.utils.get(user.guild.emojis, id=eid)
     if e is None:
-        await interaction.response.send_message(f"{user.mention} invalid emoji, please use STATIC emoji from THIS SERVER")
+        await interaction.response.send_message(f"{user.mention} invalid emoji, please use emoji from THIS SERVER")
         return
 
+    if e.animated:
+        await interaction.response.send_message(f"{user.mention} invalid emoji, please use a STATIC emoji\n(You are using animated emoji)")
+        return
+    
     role = discord.utils.get(user.roles, id=custom_roles.get(user.id))
     icon = await e.read()
     await role.edit(display_icon=icon)

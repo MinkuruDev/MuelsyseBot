@@ -101,14 +101,14 @@ async def role_color_slash(interaction, hex_color:str):
 )
 async def role_icon_slash(interaction, emoji:str):
     user = interaction.user
+    if user.id not in custom_roles:
+        await interaction.response.send_message(f"{user.mention} you don't have a custom role\n(use **/cr_create** to create one)")
+        return
+    
     if emoji in emoji_lib.EMOJI_DATA:
         role = discord.utils.get(user.roles, id=custom_roles.get(user.id))
         await role.edit(display_icon=emoji)
         await interaction.response.send_message(f"{user.mention} your custom role icon edited successfully")
-        return
-
-    if user.id not in custom_roles:
-        await interaction.response.send_message(f"{user.mention} you don't have a custom role\n(use **/cr_create** to create one)")
         return
     
     if emoji.startswith("<a:"):

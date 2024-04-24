@@ -300,6 +300,45 @@ async def assign_birthday(client, uid, current_time_utc7):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+async def delete_recent_message_command(client: discord.Client, message: discord.Message, flags: dict):
+    recent_messages = []
+    args = flags.get("_args", [])
+    lim = int(flags.get("--limit", 20))
+    if len(args) < 2:
+        await message.channel.send("Invalid agruments")
+        return
+    uid, num_del = int(args[0]), int(args[1])
+    member = await message.guild.fetch_member(uid)
+    if not member:
+        await message.channel.send("Member not found.")
+        return
+
+    # Iterate over all channels in the guild
+    for channel in message.guild.channels:
+        if not isinstance(channel, discord.TextChannel):  # Check if it's a text channel
+            continue
+        permissions = channel.permissions_for(member)
+        if not permissions.send_messages:
+            continue
+        # Fetching the member's message history in the channel
+        async for message in channel.history(limit=lim):
+            if message.author.id == uid:
+                # Add the message to the list
+                recent_messages.append(message)
+
+    # Sort the list of messages by time sent
+    recent_messages.sort(key=lambda msg: msg.created_at, reverse=True)
+
+    # Delete the specified number of recent messages
+    messages_deleted = 0
+    for message in recent_messages:
+        await message.delete()
+        messages_deleted += 1
+        if messages_deleted >= num_del:
+            break
+
+    await message.channel.send(f"Deleted {messages_deleted} recent messages from {member.name}")
+
 COMMAND_MAP = {
     'send': send_command,
     'help': help_command,
@@ -308,6 +347,7 @@ COMMAND_MAP = {
     'announcement': announcement_command,
     'edit' : edit_command,
     'nickname': edit_nickname_command,
-    'birthday': birthday_command
+    'birthday': birthday_command,
+    'prune': delete_recent_message_command
     # ... add other commands as needed
 }

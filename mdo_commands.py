@@ -312,6 +312,7 @@ async def delete_recent_message_command(client: discord.Client, message: discord
     if not member:
         await message.channel.send("Member not found.")
         return
+    original_channel = message.channel
 
     # Iterate over all channels in the guild
     for channel in message.guild.channels:
@@ -337,7 +338,7 @@ async def delete_recent_message_command(client: discord.Client, message: discord
         if messages_deleted >= num_del:
             break
 
-    await message.channel.send(f"Deleted {messages_deleted} recent messages from {member.name}")
+    await original_channel.send(f"Deleted {messages_deleted} recent messages from {member.name}")
 
 COMMAND_MAP = {
     'send': send_command,

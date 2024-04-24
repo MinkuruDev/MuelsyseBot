@@ -16,7 +16,7 @@ with open(global_vars.WORKDIR + 'command_info.json', 'r') as f:
 
 birthday_data = {}
 
-async def help_command(client, message, flags):
+async def help_command(client: discord.Client, message: discord.Message, flags: dict):
     command_parts = message.content.split()
     
     # If there's a specific command asked for in the help (e.g., mdo help send)
@@ -43,7 +43,7 @@ async def help_command(client, message, flags):
     
     await message.channel.send(help_content)
 
-async def send_command(client, message, flags):
+async def send_command(client: discord.Client, message: discord.Message, flags: dict):
     target_channel_id = int(flags.get('--channel-id', message.channel.id))
     target_channel = client.get_channel(target_channel_id)
 
@@ -68,7 +68,7 @@ async def send_command(client, message, flags):
     else:
         await target_channel.send(" ".join(flags.get('_args', [])))
 
-async def edit_command(client, message, flags):
+async def edit_command(client: discord.Client, message: discord.Message, flags: dict):
     # Extract channel ID and message ID from args
     args = flags.get('_args', [])
 
@@ -119,7 +119,7 @@ async def edit_command(client, message, flags):
     except Exception as e:
         await message.channel.send(f"An error occurred: {e}")
 
-async def timeout_command(client, message, flags):
+async def timeout_command(client: discord.Client, message: discord.Message, flags: dict):
     args = flags.get('_args', [])
 
     if len(args) < 2:
@@ -168,7 +168,7 @@ async def timeout_command(client, message, flags):
     except Exception as e:
         await message.channel.send(f"An error occurred: {e}")
 
-async def facebook_command(client, message, flags):
+async def facebook_command(client: discord.Client, message: discord.Message, flags: dict):
     channel_id = global_vars.FACEBOOK_CHANNEL_ID  if global_vars.RELEASE == 1 else 898119095143260203
     url = "https://graph.facebook.com"
 
@@ -207,7 +207,7 @@ async def facebook_command(client, message, flags):
     except Exception as e:
         await message.channel.send(f"An error occurred: {e}")
 
-async def announcement_command(client, message, flags):
+async def announcement_command(client: discord.Client, message: discord.Message, flags: dict):
     channel_id = global_vars.ANNOUNCEMENT_CHANNEL_ID  # Specify the target announcement channel ID
 
     file_name = f"{global_vars.WORKDIR}mdo/announcement.md"
@@ -225,7 +225,7 @@ async def announcement_command(client, message, flags):
     except Exception as e:
         await message.channel.send(f"An error occurred: {e}")
 
-async def edit_nickname_command(client, message, flags):
+async def edit_nickname_command(client: discord.Client, message: discord.Message, flags: dict):
     guild_id = flags.get("--guild-id", global_vars.MMM_SERVER_ID)
     guild = client.get_guild(int(guild_id))
     args = flags.get("_args", [])
@@ -245,7 +245,7 @@ async def edit_nickname_command(client, message, flags):
     else:
         print('Guild not found.')
 
-async def birthday_command(client, message, flag):
+async def birthday_command(client: discord.Client, message: discord.Message, flags: dict):
     birthday_info_channel = client.get_channel(global_vars.BIRTHDAY_DATA_CHANNEL_ID)
     guild = client.get_guild(global_vars.MMM_SERVER_ID)
 
@@ -271,7 +271,7 @@ async def birthday_command(client, message, flag):
             elif not has_birthday_role and member_birthday == [current_time_utc7.day, current_time_utc7.month]:
                 await assign_birthday(client, member.id, current_time_utc7)
 
-async def assign_birthday(client, uid, current_time_utc7):
+async def assign_birthday(client: discord.Client, uid: int, current_time_utc7):
     # Add birthday role and announce if member has birthday today but doesn't have the role
     guild = client.get_guild(global_vars.MMM_SERVER_ID)
     member = await guild.fetch_member(uid)

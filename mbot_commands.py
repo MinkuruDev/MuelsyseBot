@@ -1,3 +1,4 @@
+import discord
 import global_vars
 import mdo_commands
 import pytz
@@ -22,7 +23,7 @@ def exist_date(d, m):
         return False
     return True
 
-async def help_command(client, message, flags):
+async def help_command(client: discord.Client, message: discord.Message, flags: dict):
     command_parts = message.content.split()
     
     # If there's a specific command asked for in the help (e.g., mdo help send)
@@ -49,8 +50,8 @@ async def help_command(client, message, flags):
     
     await message.channel.send(help_content)
 
-async def birthday_set_command(client, message, flag):
-    args = flag.get('_args', [])
+async def birthday_set_command(client: discord.Client, message: discord.Message, flags: dict):
+    args = flags.get('_args', [])
     if str(message.author.id) in mdo_commands.birthday_data:
         await message.channel.send(f"{message.author.mention} you cannot set birthday twice")
         return
@@ -75,7 +76,7 @@ async def birthday_set_command(client, message, flag):
         send ***mbot birthday_cancel*** to cancel
     """)
 
-async def birthday_set_confirm(client, message, flag):
+async def birthday_set_confirm(client: discord.Client, message: discord.Message, flags: dict):
     user_id = message.author.id
     if user_id not in pending_birthday:
         await message.channel.send(f"{message.author.mention} You don't have anything to confirm. Use  ***mbot birthday_set dd mm*** to set your birthday.")
@@ -99,7 +100,7 @@ async def birthday_set_confirm(client, message, flag):
     if (dd, mm) == (current_time_utc7.day, current_time_utc7.month):
         await mdo_commands.assign_birthday(client, user_id, current_time_utc7)
 
-async def birthday_set_cancel(client, message, flag):
+async def birthday_set_cancel(client: discord.Client, message: discord.Message, flags: dict):
     if message.author.id not in pending_birthday:
         await message.channel.send(f"{message.author.mention} You don't have any pending birthday setting to cancel.")
         return

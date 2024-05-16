@@ -8,7 +8,7 @@
     },
     "birthday_set": {
         "description": "Set your birthday",
-        "usage": "mbot birthday_set DD MM",
+        "usage": "mbot birthday_set <DD> <MM>",
         "args": {
             "DD": "Day (1-31)",
             "MM": "Month (1-12)"

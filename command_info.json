@@ -1,11 +1,11 @@
 {
     "edit": {
         "description": "Edit a message using its ID and optionally replace its content with the content of a Markdown file.",
-        "usage": "mdo edit CHANNEL_ID MSG_ID [--md-file FILENAME] [CONTEXT]",
+        "usage": "mdo edit <channel id> <message id> --md-file <filename> <context>",
         "args": {
             "CHANNEL_ID": "The ID of the channel contain the message",
             "MSG_ID": "The ID of the message to be edited.",
-            "CONTEXT": "Optional. Additional text to be appended to the existing or replaced content."
+            "CONTEXT": "Additional text to be appended to the existing or replaced content. No need context if md file is provided"
         },
         "flags": {
             "--md-file": "Optional. Specify the Markdown file to replace the content of the message."
@@ -16,8 +16,11 @@
         "usage": "mdo announcement"
     },
     "facebook": {
-        "description": "Send the content of the 'facebook.md' file to Facebook channel.",
-        "usage": "mdo facebook"
+        "description": "Get the lastest post from MWC facebook page and send to facebook announcement channel",
+        "usage": "mdo facebook [ping ids]",
+        "args": {
+            "ping ids": "Optional. List of id of role or member id to get notify. If 'everyone' is argrument, ping everyone"
+        }
     },
     "help": {
         "description": "Get detailed information about a specific command or a list of available commands.",
@@ -28,34 +31,51 @@
     },
     "send": {
         "description": "Send a message, content of a text file, or an image.",
-        "usage": "mdo send [--channel-id CHANNEL_ID] [--md-file FILENAME | --image FILENAME] MESSAGE_TEXT",
+        "usage": "mdo send <MESSAGE_TEXT> --channel-id <channel id> --md-file <file name> | --image <file name>",
         "args": {
             "MESSAGE_TEXT": "The direct message text to be sent. If a file is specified using flags, this text will accompany the file."
         },
         "flags": {
-            "--channel-id": "Optional. Specify the target channel ID. If not provided, the message or file will be sent to the current channel.",
-            "--image": "Optional. Send an image from the './mdo/' directory. Provide the filename with the extension (example: cannot_save.png).",
-            "--md-file": "Optional. Send the content of a Markdown file from the './mdo/' directory. Provide the filename without '.md' extension."
+            "--channel-id": "Specify the target channel ID. If not provided, the message or file will be sent to the current channel.",
+            "--image": "Send an image from the './mdo/' directory. Provide the filename with the extension (example: cannot_save.png).",
+            "--md-file": "Send the content of a Markdown file from the './mdo/' directory. Provide the filename WITHOUT '.md' extension."
         }
     },
     "timeout": {
         "description": "Timeout a member for the specified duration. The member will not be able to send messages during the timeout period.",
-        "usage": "mdo timeout [member_id] [duration] [reason] --noti-channel [channel_id]",
+        "usage": "mdo timeout <member_id> <duration> [reason] --noti-channel [channel_id]",
         "args": {
             "member_id": "The ID of the member to be timed out.",
             "duration": "The duration of the timeout. Use d for days, h for hours, m for minutes, and s for seconds. For example, 1d2h30m for 1 day, 2 hours, and 30 minutes.",
             "reason": "Optional. The reason for the timeout."
         },
         "flags": {
-            "--noti-channel": "Optional. Specify a channel ID to send the timeout notification to this channel instead of the default channel."
+            "--noti-channel": "Specify a channel ID to send the timeout notification to this channel (default: channel the message was received)"
         }
     },
     "nickname": {
-        "description": "Set nickname of all member (exclude bot) to **Muelsyse Clone**",
-        "usage": "mdo nickname"
+        "description": "Set nickname of all member (exclude bot) to **Muelsyse Clone** or most recent nickname",
+        "usage": "mdo nickname [nick] --guild-id <guild id>",
+        "args": {
+            "nick": "Optional. Nickname to all member, if no nick is give, set to 'Muelsyse Clone'"
+        },
+        "flags": {
+            "--guild-id": "id of the guild to change nickname. (default: MMM server id)"
+        }
     },
     "birthday": {
         "description": "Set/remove birthday role from members depend on date that command was execute",
         "usage": "mdo birthday"
+    },
+    "prune": {
+        "description": "Delete recent message from specific member",
+        "usage": "mdo prune <member id> <number of message> --limit <num>",
+        "args": {
+            "member id": "The ID of the member to delete message",
+            "number of message": "The number of recent message to delete"
+        },
+        "flags": {
+            "--limit": "Number of message in a channel to search for member message (default: 20)"
+        }
     }
 }

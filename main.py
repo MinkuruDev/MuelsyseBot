@@ -50,12 +50,12 @@ async def on_ready():
         print("Running in DEBUG mode")
 
 @client.event
-async def on_member_join(member):
+async def on_member_join(member: discord.Member):
     if member.guild.id == global_vars.MMM_SERVER_ID:
         await member.edit(nick=global_vars.SERVER_NICKNAME)
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     if message.author == client.user or message.author.bot:
         return
 
@@ -94,6 +94,8 @@ async def on_message(message):
             # Execute the corresponding function from the COMMAND_MAP
             if command in COMMAND_MAP:
                 await COMMAND_MAP[command](client, message, flags)
+                if "--delete" in flags:
+                    await message.delete()
                 print("Executed: mdo", command)
         else:
             if command in MBOT_COMMAND_MAP:

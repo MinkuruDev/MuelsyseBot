@@ -15,6 +15,7 @@ MBOT_COMMAND_MAP = mbot_commands.MBOT_COMMAND_MAP
 async def do_daily():
     await mdo_commands.edit_nickname_command(client, None, {})
     await mdo_commands.birthday_command(client, None, None)
+    await mdo_commands.anniversary_command(client, None, None)
     print("Executed daily task at:", daily.get_utc_plus_7_time())
 
 async def list_custom_roles():
@@ -41,11 +42,12 @@ async def start_up():
 async def on_ready():
     await tree.sync(guild=discord.Object(id=global_vars.MMM_SERVER_ID))
     print(f'We have logged in as {client.user}')
-    asyncio.create_task(daily.daily(do_daily))
     if global_vars.RELEASE != 0:
         print('Running in RELEASE mode')
         await start_up()
         await do_daily()
+        asyncio.create_task(daily.daily(do_daily))
+        global_vars.RELEASE = 0
     else:
         print("Running in DEBUG mode")
 

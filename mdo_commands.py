@@ -271,6 +271,35 @@ async def birthday_command(client: discord.Client, message: discord.Message, fla
             elif not has_birthday_role and member_birthday == [current_time_utc7.day, current_time_utc7.month]:
                 await assign_birthday(client, member.id, current_time_utc7)
 
+async def anniversary_command(client: discord.Client, message: discord.Message, flags: dict):
+    guild = client.get_guild(global_vars.MMM_SERVER_ID)
+    announcement_channel = client.get_channel(global_vars.ANNIVERSARY_CHANNEL_ID)
+    ANNIVERSARY_ROLE_IDS = global_vars.ANNIVERSARY_ROLE_IDS
+    current_time_utc7 = datetime.now(pytz.timezone('Asia/Bangkok'))
+    
+    for member in guild.members:
+        if member.bot:  # Skip bots
+            continue
+        
+        # Calculate how many years they've been on the server
+        membership_duration = (current_time_utc7 - member.joined_at).days // 365
+        if membership_duration < 1 or membership_duration > len(ANNIVERSARY_ROLE_IDS):
+            continue  # Skip if the member hasn't reached their 1st anniversary or exceeds the available roles
+        
+        role_id = ANNIVERSARY_ROLE_IDS[membership_duration - 1]
+        anniversary_role = guild.get_role(role_id)
+
+        # Check if the member already has the role
+        if discord.utils.get(member.roles, id=role_id) is None:
+            # Assign the role
+            await member.add_roles(anniversary_role)
+            
+            # Send a message to the announcement channel
+            await announcement_channel.send(
+                f":tada: Chúc mừng {member.mention} đã trở thành Water Clone trong vòng {membership_duration} năm :tada:"
+                # "test :v"
+            )
+
 async def assign_birthday(client: discord.Client, uid: int, current_time_utc7):
     # Add birthday role and announce if member has birthday today but doesn't have the role
     guild = client.get_guild(global_vars.MMM_SERVER_ID)
@@ -349,6 +378,7 @@ COMMAND_MAP = {
     'edit' : edit_command,
     'nickname': edit_nickname_command,
     'birthday': birthday_command,
-    'prune': delete_recent_message_command
+    'anniversary': anniversary_command,
+    'prune': delete_recent_message_command,
     # ... add other commands as needed
 }

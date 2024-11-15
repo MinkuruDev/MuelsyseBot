@@ -44,10 +44,12 @@ async def on_ready():
     print(f'We have logged in as {client.user}')
     if global_vars.RELEASE != 0:
         print('Running in RELEASE mode')
+        if global_vars.RUNNED:
+            return
+        global_vars.RUNNED = True
         await start_up()
         await do_daily()
         asyncio.create_task(daily.daily(do_daily))
-        global_vars.RELEASE = 0
     else:
         print("Running in DEBUG mode")
 

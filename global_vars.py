@@ -45,6 +45,7 @@ SHWM_PAGE_ID = 176226312250666
 MWC_PAGE_ID = 107355032425494
 
 SERVER_NICKNAME = "Muelsyse Clone"
+RUNNED = False
 
 # Discord client
 intents = discord.Intents.default()

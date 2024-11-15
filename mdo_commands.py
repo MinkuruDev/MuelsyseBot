@@ -326,8 +326,8 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
     
     bot_channels = []  # Assuming bot channels are stored here
     for channel in category.channels:
-        if isinstance(channel, discord.TextChannel) and channel.id not in bot_channels:
-            bot_channels.append(channel.id)
+        # if isinstance(channel, discord.TextChannel) and channel.id not in bot_channels:
+        bot_channels.append(channel.id)
 
     # Set date range for the specified month and year
     start_date = datetime(year, month, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
@@ -339,15 +339,19 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
     # Dictionary to store message counts per user
     msg_count = defaultdict(int)
 
+    messagable_channels = list(guild.text_channels) + \
+        list(guild.threads)
+        # [channel for channel in guild.channels if isinstance(channel, discord.ForumChannel)] + \
     # Iterate through each non-bot channel in the category
-    for channel in guild.text_channels:
+    for channel in messagable_channels:
         # Skip channels that are in the bot_channels list
         if channel.id in bot_channels or not channel.permissions_for(guild.default_role).read_messages:
             continue
         
         await message.channel.send(f"checking: <#{channel.id}>")
         # Get messages within the specified month and year
-        async for msg in channel.history(after=start_date, before=end_date, limit=None):
+        limit = 50 if global_vars.RELEASE == 0 else None
+        async for msg in channel.history(after=start_date, before=end_date, limit=limit):
             if not msg.author.bot:  # Skip bot messages
                 msg_count[msg.author.id] += 1
 
@@ -362,8 +366,11 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
         username = user.name if user else f"Unknown User {user_id}"
         leaderboard += f"{i + 1}. <@{user_id}> ({escape_markdown(username)}) - {count} tin nhắn\n"
 
-    # Send leaderboard to leaderboard channel
-    await leaderboard_channel.send(leaderboard)
+    if global_vars.RELEASE == 0:
+        await message.channel.send(leaderboard)
+    else:
+        # Send leaderboard to leaderboard channel
+        await leaderboard_channel.send(leaderboard)
 
 def escape_markdown(text):
     # Escape Markdown special characters: *, _, ~, and `

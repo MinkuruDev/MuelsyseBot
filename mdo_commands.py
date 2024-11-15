@@ -9,6 +9,7 @@ import random
 
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
+from collections import defaultdict
 
 # Load the command info from the JSON file
 with open(global_vars.WORKDIR + 'command_info.json', 'r') as f:
@@ -300,6 +301,74 @@ async def anniversary_command(client: discord.Client, message: discord.Message, 
                 # "test :v"
             )
 
+async def leaderboard_command(client: discord.Client, message: discord.Message, flags: dict):
+    args = flags.get("_args", [])
+    if len(args) < 2:
+        await message.channel.send("Usage: `mdo leaderboard <MONTH> <YEAR>`")
+        return
+
+    try:
+        month = int(args[0])
+        year = int(args[1])
+    except ValueError:
+        await message.channel.send("Please enter valid numerical values for month and year.")
+        return
+
+    leaderboard_channel = client.get_channel(global_vars.LEADERBOARD_CHANNEL_ID)
+    current_time_utc7 = datetime.now(pytz.timezone('Asia/Bangkok'))
+    guild = client.get_guild(global_vars.MMM_SERVER_ID)
+
+    # Get the category named "spam bot"
+    category = discord.utils.get(guild.categories, name="spam bot")
+    if category is None:
+        await message.channel.send("Category 'spam bot' not found.")
+        return
+    
+    bot_channels = []  # Assuming bot channels are stored here
+    for channel in category.channels:
+        if isinstance(channel, discord.TextChannel) and channel.id not in bot_channels:
+            bot_channels.append(channel.id)
+
+    # Set date range for the specified month and year
+    start_date = datetime(year, month, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
+    else:
+        end_date = datetime(year, month + 1, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
+
+    # Dictionary to store message counts per user
+    msg_count = defaultdict(int)
+
+    # Iterate through each non-bot channel in the category
+    for channel in guild.text_channels:
+        # Skip channels that are in the bot_channels list
+        if channel.id in bot_channels or not channel.permissions_for(guild.default_role).read_messages:
+            continue
+        
+        await message.channel.send(f"checking: <#{channel.id}>")
+        # Get messages within the specified month and year
+        async for msg in channel.history(after=start_date, before=end_date, limit=None):
+            if not msg.author.bot:  # Skip bot messages
+                msg_count[msg.author.id] += 1
+
+    # Sort and get the top 10 users by message count
+    top_users = sorted(msg_count.items(), key=lambda x: x[1], reverse=True)[:10]
+
+    # Format leaderboard message
+    leaderboard = "🏆 **Bảng xếp hạng số tin nhắn đã gửi trong tháng {}/{}** 🏆\n".format(month, year)
+    leaderboard += "*(Thống kê không tính tin nhắn được gửi trong kênh bot)*\n"
+    for i, (user_id, count) in enumerate(top_users):
+        user = guild.get_member(user_id)
+        username = user.name if user else f"Unknown User {user_id}"
+        leaderboard += f"{i + 1}. <@{user_id}> ({escape_markdown(username)}) - {count} tin nhắn\n"
+
+    # Send leaderboard to leaderboard channel
+    await leaderboard_channel.send(leaderboard)
+
+def escape_markdown(text):
+    # Escape Markdown special characters: *, _, ~, and `
+    return re.sub(r"([*_~`])", r"\\\1", text)
+
 async def assign_birthday(client: discord.Client, uid: int, current_time_utc7):
     # Add birthday role and announce if member has birthday today but doesn't have the role
     guild = client.get_guild(global_vars.MMM_SERVER_ID)
@@ -379,6 +448,7 @@ COMMAND_MAP = {
     'nickname': edit_nickname_command,
     'birthday': birthday_command,
     'anniversary': anniversary_command,
+    'leaderboard': leaderboard_command,
     'prune': delete_recent_message_command,
     # ... add other commands as needed
 }

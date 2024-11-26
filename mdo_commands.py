@@ -372,6 +372,55 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
         # Send leaderboard to leaderboard channel
         await leaderboard_channel.send(leaderboard)
 
+async def fix_missing_command(client: discord.Client, message: discord.Message, flags: dict):
+    guild = client.get_guild(global_vars.MMM_SERVER_ID)
+    if not guild:
+        await message.channel.send("Guild not found")
+        return
+
+    for member in guild.members:
+        if member.bot:
+            continue
+        # Ensure member has all roles in `MUST_HAVE_ROLE_IDS`
+        for role_id in global_vars.MUST_HAVE_ROLE_IDS:
+            role = guild.get_role(role_id)
+            if role and role not in member.roles:
+                try:
+                    await member.add_roles(role, reason="Missing required role.")
+                except discord.Forbidden:
+                    await message.channel.send(f"Permission denied to modify roles for {member.name}.")
+                except discord.HTTPException as e:
+                    await message.channel.send(f"Error adding role to {member.name}: {e}")
+
+        # Handle `OPTIONAL_ROLE_IDS`
+        for a_id, b_id in global_vars.OPTIONAL_ROLE_IDS:
+            role_a = guild.get_role(a_id)
+            role_b = guild.get_role(b_id)
+            
+            if not role_a or not role_b:
+                continue  # Skip if roles do not exist
+
+            has_a = role_a in member.roles
+            has_b = role_b in member.roles
+
+            if not has_a and not has_b:
+                # Member has neither role, give `role_a`
+                try:
+                    await member.add_roles(role_a, reason="Adding missing optional role A.")
+                except discord.Forbidden:
+                    await message.channel.send(f"Permission denied to add role A for {member.name}.")
+                except discord.HTTPException as e:
+                    await message.channel.send(f"Error adding role A to {member.name}: {e}")
+            elif has_a and has_b:
+                # Member has both roles, remove `role_a` and keep `role_b`
+                try:
+                    await member.remove_roles(role_a, reason="Conflict resolution: keeping role B.")
+                except discord.Forbidden:
+                    await message.channel.send(f"Permission denied to remove role A from {member.name}.")
+                except discord.HTTPException as e:
+                    await message.channel.send(f"Error removing role A from {member.name}: {e}")
+
+
 def escape_markdown(text):
     # Escape Markdown special characters: *, _, ~, and `
     return re.sub(r"([*_~`])", r"\\\1", text)
@@ -456,6 +505,7 @@ COMMAND_MAP = {
     'birthday': birthday_command,
     'anniversary': anniversary_command,
     'leaderboard': leaderboard_command,
+    'fix': fix_missing_command,
     'prune': delete_recent_message_command,
     # ... add other commands as needed
 }

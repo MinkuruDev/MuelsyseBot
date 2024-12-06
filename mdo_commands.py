@@ -343,6 +343,7 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
         list(guild.threads)
         # [channel for channel in guild.channels if isinstance(channel, discord.ForumChannel)] + \
     # Iterate through each non-bot channel in the category
+    total_messages = 0
     for channel in messagable_channels:
         # Skip channels that are in the bot_channels list
         if channel.id in bot_channels or not channel.permissions_for(guild.default_role).read_messages:
@@ -354,6 +355,7 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
         async for msg in channel.history(after=start_date, before=end_date, limit=limit):
             if not msg.author.bot:  # Skip bot messages
                 msg_count[msg.author.id] += 1
+                total_messages += 1
 
     # Sort and get the top 10 users by message count
     top_users = sorted(msg_count.items(), key=lambda x: x[1], reverse=True)[:10]
@@ -365,6 +367,7 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
         user = guild.get_member(user_id)
         username = user.name if user else f"Unknown User {user_id}"
         leaderboard += f"{i + 1}. <@{user_id}> ({escape_markdown(username)}) - {count} tin nhắn\n"
+    leaderboard += f"Tổng số lượng tin nhắn (Kể cả ngoài top 10): **{total_messages}**"
 
     if global_vars.RELEASE == 0:
         await message.channel.send(leaderboard)

@@ -43,7 +43,7 @@
     },
     "timeout": {
         "description": "Timeout a member for the specified duration. The member will not be able to send messages during the timeout period.",
-        "usage": "mdo timeout <member_id> <duration> [reason] --noti-channel [channel_id]",
+        "usage": "mdo timeout <member_id> <duration> [reason] --noti-channel <channel_id>",
         "args": {
             "member_id": "The ID of the member to be timed out.",
             "duration": "The duration of the timeout. Use d for days, h for hours, m for minutes, and s for seconds. For example, 1d2h30m for 1 day, 2 hours, and 30 minutes.",
@@ -66,6 +66,22 @@
     "birthday": {
         "description": "Set/remove birthday role from members depend on date that command was execute",
         "usage": "mdo birthday"
+    },
+    "anniversary": {
+        "description": "Assign anniversary roles to members based on their server join date and announce milestones.",
+        "usage": "mdo anniversary"
+    },
+    "leaderboard": {
+        "description": "Generate a message leaderboard for a specified month and year.",
+        "usage": "mdo leaderboard <MONTH> <YEAR>",
+        "args": {
+            "MONTH": "The month (numerical) for which to generate the leaderboard.",
+            "YEAR": "The year (numerical) for which to generate the leaderboard."
+        }
+    },
+    "fix": {
+        "description": "Ensure members have all required roles and handle optional roles with specific logic.",
+        "usage": "mdo fix"
     },
     "prune": {
         "description": "Delete recent message from specific member",

@@ -6,6 +6,7 @@ import global_vars
 import requests
 import os
 import random
+import utils
 
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
@@ -227,11 +228,7 @@ async def announcement_command(client: discord.Client, message: discord.Message,
         await message.channel.send(f"An error occurred: {e}")
 
 async def edit_nickname_command(client: discord.Client, message: discord.Message, flags: dict):
-    guild_id = flags.get("--guild-id", global_vars.MMM_SERVER_ID)
-    guild = client.get_guild(int(guild_id))
-    args = flags.get("_args", [])
-    if len(args) > 0:
-        global_vars.SERVER_NICKNAME = " ".join(args)
+    guild = client.get_guild(global_vars.MMM_SERVER_ID)
     nick = global_vars.SERVER_NICKNAME
 
     if guild:
@@ -240,9 +237,11 @@ async def edit_nickname_command(client: discord.Client, message: discord.Message
         for member in members:
             if member.bot or member.id == owner_id:
                 continue
-            if member.nick != nick:
+            valid, reason = utils.is_valid_nickname(guild, member, member.nick)
+            if not valid:
                 print(f"{member.name}: {member.nick} --> {nick}")
-                await member.edit(nick=nick)
+                print(f"Reason: {reason}")
+                await member.edit(nick=nick, reason=reason)
     else:
         print('Guild not found.')
 

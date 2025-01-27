@@ -5,6 +5,7 @@ import mdo_commands
 import mbot_commands
 import slash_commands
 import daily
+import utils
 
 client = global_vars.client
 tree = slash_commands.tree
@@ -18,25 +19,6 @@ async def do_daily():
     await mdo_commands.anniversary_command(client, None, None)
     print("Executed daily task at:", daily.get_utc_plus_7_time())
 
-async def list_custom_roles():
-    guild = client.get_guild(global_vars.MMM_SERVER_ID)
-    roles = guild.roles[::-1] # Reverse the roles list to iterate from top to bottom
-    custom_role = False
-    for role in roles:
-        if role.id == global_vars.BIRTHDAY_ROLE_ID:
-            custom_role = True
-            continue
-        if not custom_role:
-            continue
-        if role.id == global_vars.SERVER_BOOSTER_ROLE_ID:
-            break
-        if len(role.members) == 0:
-            continue
-        mem = role.members[0]
-        slash_commands.custom_roles[mem.id] = role.id
-
-async def start_up():
-    await list_custom_roles()
 
 @client.event
 async def on_ready():
@@ -47,7 +29,6 @@ async def on_ready():
         if global_vars.RUNNED:
             return
         global_vars.RUNNED = True
-        await start_up()
         await do_daily()
         asyncio.create_task(daily.daily(do_daily))
     else:
@@ -57,6 +38,28 @@ async def on_ready():
 async def on_member_join(member: discord.Member):
     if member.guild.id == global_vars.MMM_SERVER_ID:
         await member.edit(nick=global_vars.SERVER_NICKNAME)
+
+@client.event
+async def on_member_update(before: discord.Member, after: discord.Member):
+    # skip bot
+    if before.bot:
+        return
+    # Ensure the event is for the correct guild
+    if before.guild.id == global_vars.MMM_SERVER_ID:
+        # Check if the nickname changed
+        if before.nick != after.nick:
+            old_nick = before.nick or before.name  # Fallback to username
+            new_nick = after.nick or after.name   # Fallback to username
+
+            if before.id in slash_commands.nick_numbers:
+                num = slash_commands.nick_numbers.pop(before.id, None)
+                if num is not None:
+                    slash_commands.nick_numbers.pop(num, None)
+            
+            number = utils.get_number_from_nick(before.guild, new_nick)
+            if number is not None:
+                slash_commands.nick_numbers[before.id] = number
+                slash_commands.nick_numbers[number] = before.id
 
 @client.event
 async def on_message(message: discord.Message):

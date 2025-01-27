@@ -7,6 +7,7 @@ import requests
 import os
 import random
 import utils
+import slash_commands
 
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
@@ -237,13 +238,27 @@ async def edit_nickname_command(client: discord.Client, message: discord.Message
         for member in members:
             if member.bot or member.id == owner_id:
                 continue
-            valid, reason = utils.is_valid_nickname(guild, member, member.nick)
+            valid, reason = utils.is_valid_nickname(guild, member, member.nick or "")
             if not valid:
                 print(f"{member.name}: {member.nick} --> {nick}")
                 print(f"Reason: {reason}")
                 await member.edit(nick=nick, reason=reason)
+        await list_nick_numbers(client)
+        if global_vars.RELEASE == 0:
+            # print map of nick_numbers
+            print(slash_commands.nick_numbers)
     else:
         print('Guild not found.')
+
+async def list_nick_numbers(client: discord.Client):
+    guild = client.get_guild(global_vars.MMM_SERVER_ID)
+    for member in guild.members:
+        if member.nick is None or member.bot:
+            continue
+        number = utils.get_number_from_nick(guild, member.nick)
+        if number is not None:
+            slash_commands.nick_numbers[member.id] = number
+            slash_commands.nick_numbers[number] = member.id
 
 async def birthday_command(client: discord.Client, message: discord.Message, flags: dict):
     birthday_info_channel = client.get_channel(global_vars.BIRTHDAY_DATA_CHANNEL_ID)

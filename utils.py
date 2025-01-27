@@ -2,6 +2,16 @@ import discord
 import global_vars
 import re
 
+def get_number_from_nick(guild: discord.Guild, nick: str) -> int:
+    if not re.match(rf"^{global_vars.SERVER_NICKNAME}( \d+)?$", nick):
+        return None
+
+    if nick == global_vars.SERVER_NICKNAME:
+        return None
+
+    parts = nick.split()
+    return int(parts[-1])
+
 def is_valid_nickname(guild: discord.Guild, member: discord.Member, nick: str) -> (bool, str):
     # Ensure the event is for the correct guild
     if guild.id != global_vars.MMM_SERVER_ID:
@@ -33,7 +43,7 @@ def is_valid_nickname(guild: discord.Guild, member: discord.Member, nick: str) -
 
     # if the number is smaller than 100, check for vip
     if number < 100:
-        return (is_vip(guild, member) or is_staff, "Number 11-99 is reserved for VIP (Booster, Level 32, Top 1 Leaderboard once), and staff") 
+        return (is_vip(guild, member) or is_staff, "Number 10-99 is reserved for VIP (Booster, Level 32, Top 1 Leaderboard once), and staff") 
 
     return (True, "")
 

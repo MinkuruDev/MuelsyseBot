@@ -357,6 +357,9 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
     leaderboard_channel = client.get_channel(global_vars.LEADERBOARD_CHANNEL_ID)
     current_time_utc7 = datetime.now(pytz.timezone('Asia/Bangkok'))
     guild = client.get_guild(global_vars.MMM_SERVER_ID)
+    sam_diff = int(flags.get("--sam-diff", "0"))
+    sam_total = 50_000 + sam_diff * 10_000
+    sam_top10 = 2000 + sam_diff * 500
 
     category = discord.utils.get(guild.categories, name="spam bot")
     if category is None:
@@ -402,15 +405,67 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
             msg_count[user_id] += count
         total_messages += local_total
 
-    top_users = sorted(msg_count.items(), key=lambda x: x[1], reverse=True)[:10]
+    extended = sorted(msg_count.items(), key=lambda x: x[1], reverse=True)[:20]
+    top_users = extended[:10]
+    is_sam = total_messages >= sam_total or (top_users[-1][1] if top_users else 0) >= sam_top10
+
+    near_top_1 = set()
+    joint_top_1 = set()
+
+    if top_users:
+        top_1_msg = top_users[0][1]
+        top_10_msg = top_users[9][1] if len(top_users) >= 10 else 0
+
+        for i, (user_id, count) in enumerate(top_users[1:], start=2):
+            if count / top_1_msg >= 0.99:  # 99% of top 1 messages
+                near_top_1.add(user_id)
+
+            if count == top_1_msg:  # Equal to top 1
+                joint_top_1.add(user_id)
+
+        # If the leaderboard qualifies for "Đồng top 1" condition (top 10 has > 1000 messages)
+        if top_10_msg >= 1000:
+            joint_top_1.update(near_top_1)
+
+        # If SAM conditions are met, apply to ranks #4 - #10 using #3 as reference
+        if is_sam and len(top_users) >= 3:
+            top_3_msg = top_users[2][1]  # #3 messages count
+            near_top_1.clear()
+            joint_top_1.clear()
+
+            for i, (user_id, count) in enumerate(top_users[3:], start=4):
+                if count / top_3_msg >= 0.99:  # 99% of top 3 messages
+                    near_top_1.add(user_id)
+
+                if count == top_3_msg:  # Equal to top 3
+                    joint_top_1.add(user_id)
+
+            if top_10_msg >= 1000:
+                joint_top_1.update(near_top_1)
+
     leaderboard = f"🏆 **Bảng xếp hạng số tin nhắn đã gửi trong tháng {month}/{year}** 🏆\n"
     leaderboard += "*(Thống kê không tính tin nhắn được gửi trong kênh bot)*\n"
-    for i, (user_id, count) in enumerate(top_users):
+    leaderboard += f"Độ khó của Super Active Month: **{sam_diff}**\n"
+    leaderboard += f"*({sam_total} tổng tin nhắn **hoặc** người đứng top 10 đạt {sam_top10} tin nhắn)*\n\n"
+    for i, (user_id, count) in enumerate(top_users, start=1):
         user = guild.get_member(user_id)
         username = user.name if user else f"Unknown User {user_id}"
-        leaderboard += f"{i + 1}. <@{user_id}> ({discord.utils.escape_markdown(username)}) - {count} tin nhắn\n"
-    leaderboard += f"Tổng số lượng tin nhắn (Kể cả ngoài top 10): **{total_messages}**"
+        leaderboard += f"{i}. <@{user_id}> ({discord.utils.escape_markdown(username)}) - {count} tin nhắn"
+        if user_id in joint_top_1:
+            leaderboard += " (Đồng top 1)\n"
+        elif user_id in near_top_1:
+            leaderboard += " (Gần top 1)\n"
+        else:
+            leaderboard += "\n"
+    leaderboard += f"Tổng số lượng tin nhắn (Kể cả ngoài bảng xếp hạng): **{total_messages}**\n"
     
+    if is_sam:
+        leaderboard += "\n:tada: **Hiển thị bảng xếp hạng đến #20 cho Super Active Month!** :tada:\n"
+        for i, (user_id, count) in enumerate(extended[10:], start=11):
+            user = guild.get_member(user_id)
+            username = user.name if user else f"Unknown User {user_id}"
+            leaderboard += f"{i}. <@{user_id}> ({discord.utils.escape_markdown(username)}) - {count} tin nhắn\n"
+
     if global_vars.RELEASE == 0:
         await message.channel.send(leaderboard)
     else:

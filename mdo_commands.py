@@ -8,6 +8,7 @@ import os
 import random
 import utils
 import slash_commands
+import asyncio
 
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
@@ -315,6 +316,27 @@ async def anniversary_command(client: discord.Client, message: discord.Message, 
                 # "test :v"
             )
 
+def split_into_days(start_date, end_date):
+    """Generates a list of daily time ranges between start_date and end_date."""
+    current = start_date
+    while current < end_date:
+        next_day = current + timedelta(days=1)
+        yield current, next_day
+        current = next_day
+
+async def process_messages_in_channel(channel, start_date, end_date):
+    """Processes messages for a specific channel within the given time range and returns local counts."""
+    local_count = defaultdict(int)
+    local_total = 0
+
+    limit = 50 if global_vars.RELEASE == 0 else None
+    async for msg in channel.history(after=start_date, before=end_date, limit=limit):
+        if not msg.author.bot:
+            local_count[msg.author.id] += 1
+            local_total += 1
+
+    return local_count, local_total
+
 async def leaderboard_command(client: discord.Client, message: discord.Message, flags: dict):
     args = flags.get("_args", [])
     if len(args) < 2:
@@ -332,61 +354,62 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
     current_time_utc7 = datetime.now(pytz.timezone('Asia/Bangkok'))
     guild = client.get_guild(global_vars.MMM_SERVER_ID)
 
-    # Get the category named "spam bot"
     category = discord.utils.get(guild.categories, name="spam bot")
     if category is None:
         await message.channel.send("Category 'spam bot' not found.")
         return
     
-    bot_channels = []  # Assuming bot channels are stored here
-    for channel in category.channels:
-        # if isinstance(channel, discord.TextChannel) and channel.id not in bot_channels:
-        bot_channels.append(channel.id)
-
-    # Set date range for the specified month and year
+    bot_channels = [channel.id for channel in category.channels]
+    
     start_date = datetime(year, month, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
-    if month == 12:
-        end_date = datetime(year + 1, 1, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
-    else:
-        end_date = datetime(year, month + 1, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
-
-    # Dictionary to store message counts per user
+    end_date = datetime(year + 1, 1, 1, tzinfo=pytz.timezone('Asia/Bangkok')) if month == 12 else datetime(year, month + 1, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
+    
     msg_count = defaultdict(int)
-
-    messagable_channels = list(guild.text_channels) + \
-        list(guild.threads)
-        # [channel for channel in guild.channels if isinstance(channel, discord.ForumChannel)] + \
-    # Iterate through each non-bot channel in the category
     total_messages = 0
+
+    very_active_channels = [1160783654168035381]
+    messagable_channels = list(guild.text_channels) + list(guild.threads)
+    
     for channel in messagable_channels:
-        # Skip channels that are in the bot_channels list
-        if channel.id in bot_channels or not channel.permissions_for(guild.default_role).read_messages:
+        if channel.id in bot_channels or channel.id in very_active_channels or not channel.permissions_for(guild.default_role).send_messages:
             continue
         
-        await message.channel.send(f"checking: <#{channel.id}>")
-        # Get messages within the specified month and year
+        await message.channel.send(f"Checking: <#{channel.id}>")
         limit = 50 if global_vars.RELEASE == 0 else None
         async for msg in channel.history(after=start_date, before=end_date, limit=limit):
-            if not msg.author.bot:  # Skip bot messages
+            if not msg.author.bot:
                 msg_count[msg.author.id] += 1
                 total_messages += 1
+    
+    tasks = []
+    for active_channel_id in very_active_channels:
+        channel = client.get_channel(active_channel_id)
+        if channel is None:
+            continue
+        
+        await message.channel.send(f"Checking: <#{active_channel_id}>")
+        for day_start, day_end in split_into_days(start_date, end_date):
+            tasks.append(process_messages_in_channel(channel, day_start, day_end))
+    
+    results = await asyncio.gather(*tasks)
+    
+    for local_count, local_total in results:
+        for user_id, count in local_count.items():
+            msg_count[user_id] += count
+        total_messages += local_total
 
-    # Sort and get the top 10 users by message count
     top_users = sorted(msg_count.items(), key=lambda x: x[1], reverse=True)[:10]
-
-    # Format leaderboard message
-    leaderboard = "🏆 **Bảng xếp hạng số tin nhắn đã gửi trong tháng {}/{}** 🏆\n".format(month, year)
+    leaderboard = f"🏆 **Bảng xếp hạng số tin nhắn đã gửi trong tháng {month}/{year}** 🏆\n"
     leaderboard += "*(Thống kê không tính tin nhắn được gửi trong kênh bot)*\n"
     for i, (user_id, count) in enumerate(top_users):
         user = guild.get_member(user_id)
         username = user.name if user else f"Unknown User {user_id}"
-        leaderboard += f"{i + 1}. <@{user_id}> ({escape_markdown(username)}) - {count} tin nhắn\n"
+        leaderboard += f"{i + 1}. <@{user_id}> ({discord.utils.escape_markdown(username)}) - {count} tin nhắn\n"
     leaderboard += f"Tổng số lượng tin nhắn (Kể cả ngoài top 10): **{total_messages}**"
-
+    
     if global_vars.RELEASE == 0:
         await message.channel.send(leaderboard)
     else:
-        # Send leaderboard to leaderboard channel
         await leaderboard_channel.send(leaderboard)
 
 async def fix_missing_command(client: discord.Client, message: discord.Message, flags: dict):
@@ -436,11 +459,6 @@ async def fix_missing_command(client: discord.Client, message: discord.Message, 
                     await message.channel.send(f"Permission denied to remove role A from {member.name}.")
                 except discord.HTTPException as e:
                     await message.channel.send(f"Error removing role A from {member.name}: {e}")
-
-
-def escape_markdown(text):
-    # Escape Markdown special characters: *, _, ~, and `
-    return re.sub(r"([*_~`])", r"\\\1", text)
 
 async def assign_birthday(client: discord.Client, uid: int, current_time_utc7):
     # Add birthday role and announce if member has birthday today but doesn't have the role

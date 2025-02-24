@@ -9,6 +9,7 @@ import random
 import utils
 import slash_commands
 import asyncio
+import time
 
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
@@ -316,20 +317,23 @@ async def anniversary_command(client: discord.Client, message: discord.Message, 
                 # "test :v"
             )
 
-def split_into_days(start_date, end_date):
-    """Generates a list of daily time ranges between start_date and end_date."""
-    current = start_date
-    while current < end_date:
-        next_day = current + timedelta(days=1)
-        yield current, next_day
-        current = next_day
+def split_into_equal_timestamps(start_date, end_date, num_splits=10):
+    """Generates a list of equal time ranges between start_date and end_date."""
+    total_duration = end_date - start_date
+    split_duration = total_duration / num_splits
+    
+    for i in range(num_splits):
+        current = start_date + i * split_duration
+        next_timestamp = start_date + (i + 1) * split_duration
+        yield current, next_timestamp
 
 async def process_messages_in_channel(channel, start_date, end_date):
     """Processes messages for a specific channel within the given time range and returns local counts."""
     local_count = defaultdict(int)
     local_total = 0
 
-    limit = 50 if global_vars.RELEASE == 0 else None
+    # limit = 50 if global_vars.RELEASE == 0 else None
+    limit = None # debug Super active month
     async for msg in channel.history(after=start_date, before=end_date, limit=limit):
         if not msg.author.bot:
             local_count[msg.author.id] += 1
@@ -370,29 +374,29 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
     very_active_channels = [1160783654168035381]
     messagable_channels = list(guild.text_channels) + list(guild.threads)
     
+    tasks = []
     for channel in messagable_channels:
         if channel.id in bot_channels or channel.id in very_active_channels or not channel.permissions_for(guild.default_role).send_messages:
             continue
         
         await message.channel.send(f"Checking: <#{channel.id}>")
-        limit = 50 if global_vars.RELEASE == 0 else None
-        async for msg in channel.history(after=start_date, before=end_date, limit=limit):
-            if not msg.author.bot:
-                msg_count[msg.author.id] += 1
-                total_messages += 1
+        tasks.append(process_messages_in_channel(channel, start_date, end_date))
     
-    tasks = []
     for active_channel_id in very_active_channels:
         channel = client.get_channel(active_channel_id)
         if channel is None:
             continue
         
         await message.channel.send(f"Checking: <#{active_channel_id}>")
-        for day_start, day_end in split_into_days(start_date, end_date):
+        for day_start, day_end in split_into_equal_timestamps(start_date, end_date, 2):
             tasks.append(process_messages_in_channel(channel, day_start, day_end))
     
+    start_time = time.time()
     results = await asyncio.gather(*tasks)
-    
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    await message.channel.send(f"Elapsed time: {elapsed_time:.2f} seconds")
+
     for local_count, local_total in results:
         for user_id, count in local_count.items():
             msg_count[user_id] += count

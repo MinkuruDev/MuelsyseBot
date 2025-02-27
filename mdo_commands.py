@@ -332,8 +332,8 @@ async def process_messages_in_channel(channel, start_date, end_date):
     local_count = defaultdict(int)
     local_total = 0
 
-    # limit = 50 if global_vars.RELEASE == 0 else None
-    limit = None # debug Super active month
+    limit = 50 if global_vars.RELEASE == 0 else None
+    # limit = None # debug Super active month
     async for msg in channel.history(after=start_date, before=end_date, limit=limit):
         if not msg.author.bot:
             local_count[msg.author.id] += 1
@@ -465,6 +465,9 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
             user = guild.get_member(user_id)
             username = user.name if user else f"Unknown User {user_id}"
             leaderboard += f"{i}. <@{user_id}> ({discord.utils.escape_markdown(username)}) - {count} tin nhắn\n"
+
+    # ping server update notification role
+    leaderboard += f"<@&{global_vars.SERVER_UPDATE_NOTIFICATION_ROLE_ID}>\n"
 
     if global_vars.RELEASE == 0:
         await message.channel.send(leaderboard)

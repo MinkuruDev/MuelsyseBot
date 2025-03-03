@@ -591,6 +591,34 @@ async def delete_recent_message_command(client: discord.Client, message: discord
 
     await original_channel.send(f"Deleted {messages_deleted} recent messages from {member.name}")
 
+async def add_experience_command(client: discord.Client, message: discord.Message, flags: dict):
+    args = flags.get('_args', [])
+    if len(args) < 2:
+        await message.channel.send("Please provide user ID, and experience amount.")
+        return
+    try:
+        user_id = int(args[0])
+        amount = int(args[1])
+    except ValueError:
+        await message.channel.send("Please provide valid numerical values for user ID, and experience amount.")
+        return
+
+    reason = "Reason: " + " ".join(args[2:]) if len(args) > 2 else ""
+    maki = global_vars.maki
+    response = maki.add_experience(global_vars.MMM_SERVER_ID, user_id, amount)
+    if response["_status_code"] == 200:
+        add_or_remove = "+"
+        if amount < 0:
+            add_or_remove = "-"
+            amount = -amount
+        await message.channel.send(f"<@{user_id}> {add_or_remove}{amount} exp. {reason}")
+    else:
+        if "detail" in response:
+            await message.channel.send(f"Error: {response['detail']}")
+        else:
+            print(response)
+            await message.channel.send(f"An error occurred. Check debug log for details.")
+
 COMMAND_MAP = {
     'send': send_command,
     'help': help_command,
@@ -604,5 +632,6 @@ COMMAND_MAP = {
     'leaderboard': leaderboard_command,
     'fix': fix_missing_command,
     'prune': delete_recent_message_command,
+    'addexp': add_experience_command,
     # ... add other commands as needed
 }

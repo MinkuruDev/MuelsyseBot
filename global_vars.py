@@ -5,6 +5,7 @@ import firebase_admin
 from dotenv import load_dotenv
 from discord import app_commands
 from firebase_admin import credentials, firestore
+from makisdk import MakiClientExtended
 
 load_dotenv()
 TOKEN = os.environ.get("TOKEN")
@@ -12,6 +13,7 @@ ALLOWED_ID = int(os.environ.get("ALLOWED_ID"))
 RELEASE = int(os.environ.get("RELEASE"))
 WORKDIR = os.environ.get("WORKDIR")
 FB_ACCESS_TOKEN = os.getenv("FB_ACCESS_TOKEN")
+MAKI_API_GUILD_TOKEN = os.getenv("MAKI_API_TOKEN")
 
 # command server
 PING_CHANNEL_ID = 1174532883420024893
@@ -72,6 +74,9 @@ intents.message_content = True
 intents.members = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+
+# Maki client
+maki = MakiClientExtended(api_key=f"Guild {MAKI_API_GUILD_TOKEN}")
 
 # Firestore database
 cred = credentials.Certificate(f'{WORKDIR}serviceAccountKey.json')

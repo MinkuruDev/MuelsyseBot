@@ -194,18 +194,20 @@ async def facebook_command(client: discord.Client, message: discord.Message, fla
         resp = requests.get(f"{url}/{post_id}", params)
         obj = json.loads(resp.text)
         post_url = obj.get("permalink_url")
+        # embed link, change 'facebook' from post_url to 'facebed'
+        embed_url = post_url.replace("facebook", "facebed")
 
         args = flags.get('_args', [])
         scopes = f"<@&{global_vars.FACEBOOK_NOTIFICATION_ROLE_ID}>"
         if len(args) > 0:
             if args[0] == "everyone":
-                scopes = "@everyone Sorry for the ping but this is important"
+                scopes = "@everyone Xin lỗi vì đã ping nhưng đây là thông báo quan trọng!"
             else:
                 for some_id in args:
                     scopes += f"<@{some_id}>"
         
         noti_channel = client.get_channel(channel_id)
-        msg = f"{scopes}\nMuelsyse's water clone just posted !!!\n{post_url}"
+        msg = f"{scopes}\nMuelsyse's water clone vừa mới đăng bài !!!\n{embed_url}\nNếu link embed không hoạt động, sử dụng link này:\n{post_url}"
 
         await noti_channel.send(msg)
 

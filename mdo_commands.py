@@ -363,12 +363,19 @@ async def leaderboard_command(client: discord.Client, message: discord.Message, 
     sam_total = 50_000 + sam_diff * 10_000
     sam_top10 = 2000 + sam_diff * 500
 
-    category = discord.utils.get(guild.categories, name="spam bot")
-    if category is None:
-        await message.channel.send("Category 'spam bot' not found.")
+    # List of category names you want to include
+    category_names = ["spam bot", "Doro777"]
+
+    # Find all matching categories
+    categories = [cat for cat in guild.categories if cat.name in category_names]
+
+    if not categories:
+        await message.channel.send("None of the specified categories were found.")
         return
-    
-    bot_channels = [channel.id for channel in category.channels]
+
+    # Collect all channel IDs from the matched categories
+    bot_channels = [channel.id for category in categories for channel in category.channels]
+
     
     start_date = datetime(year, month, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
     end_date = datetime(year + 1, 1, 1, tzinfo=pytz.timezone('Asia/Bangkok')) if month == 12 else datetime(year, month + 1, 1, tzinfo=pytz.timezone('Asia/Bangkok'))

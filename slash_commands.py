@@ -2,6 +2,7 @@ import discord
 import global_vars
 import mdo_commands
 import mbot_commands
+import mdo_rework
 import utils
 
 from discord import app_commands
@@ -35,10 +36,10 @@ async def birthdy_get_slash(interaction: discord.Interaction, user: discord.Memb
         uid = user.id
     
     uid = str(uid)
-    if uid not in mdo_commands.birthday_data:
+    if uid not in mdo_rework.birthday_data:
         await interaction.response.send_message(f"<@{uid}> birthday is not set")
     else:
-        dd, mm = mdo_commands.birthday_data[uid]
+        dd, mm = mdo_rework.birthday_data[uid]
         await interaction.response.send_message(f"<@{uid}> birthday is: {dd}/{mm} (dd/mm format)")
 
 @tree.command(

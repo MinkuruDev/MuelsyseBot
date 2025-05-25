@@ -1,6 +1,7 @@
 import os
 import discord
 import firebase_admin
+import discord_log
 
 from dotenv import load_dotenv
 from discord import app_commands
@@ -28,6 +29,7 @@ FACEBOOK_CHANNEL_ID = 1167841637163089930
 BIRTHDAY_ANNOUNCEMENT_CHANNEL_ID = 1200734259913166948
 ANNIVERSARY_CHANNEL_ID = 1298189420415029299
 LEADERBOARD_CHANNEL_ID = 1306809263309721711
+LOG_CHANNEL_ID = 1375862631755415743
 
 BIRTHDAY_ROLE_ID = 1180309158919155722
 SERVER_BOOSTER_ROLE_ID = 1166770283391242300
@@ -83,3 +85,6 @@ cred = credentials.Certificate(f'{WORKDIR}serviceAccountKey.json')
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 all_birthday_ref = db.collection("Birthday").document("AllBirthday")
+
+# logging
+logger : discord_log.DiscordLogger = None

@@ -2,10 +2,14 @@ import asyncio
 import discord
 import global_vars
 import mdo_commands
+import mdo_parser
+import mdo_rework
 import mbot_commands
 import slash_commands
 import daily
 import utils
+import re
+import discord_log
 
 client = global_vars.client
 tree = slash_commands.tree
@@ -14,16 +18,24 @@ COMMAND_MAP = mdo_commands.COMMAND_MAP
 MBOT_COMMAND_MAP = mbot_commands.MBOT_COMMAND_MAP
 
 async def do_daily():
-    await mdo_commands.edit_nickname_command(client, None, {})
-    await mdo_commands.birthday_command(client, None, None)
-    await mdo_commands.anniversary_command(client, None, None)
-    print("Executed daily task at:", daily.get_utc_plus_7_time())
+    args = mdo_parser.parse_str_command(f"mdo nickname")
+    await mdo_rework.nickname_command(args)
+    args = mdo_parser.parse_str_command(f"mdo birthday")
+    await mdo_rework.birthday_command(args)
+    args = mdo_parser.parse_str_command(f"mdo anniversary")
+    await mdo_rework.anniversary_command(args)
+    print("Executed daily task at:", utils.current_time_utc7())
 
 
 @client.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=global_vars.MMM_SERVER_ID))
     print(f'We have logged in as {client.user}')
+    global_vars.logger = discord_log.DiscordLogger(
+        log_channel=client.get_channel(global_vars.LOG_CHANNEL_ID)
+    )
+    mdo_rework.logger = global_vars.logger
+    global_vars.logger.INFO(f"Logged in as {client.user.name} ({client.user.id})")
     if global_vars.RELEASE != 0:
         print('Running in RELEASE mode')
         if global_vars.RUNNED:
@@ -33,6 +45,7 @@ async def on_ready():
         asyncio.create_task(daily.daily(do_daily))
     else:
         print("Running in DEBUG mode")
+    global_vars.logger.flush()
 
 @client.event
 async def on_member_join(member: discord.Member):
@@ -73,40 +86,103 @@ async def on_message(message: discord.Message):
             await pinged_channel.send(ping_message)
 
     is_mdo = message.content.startswith('mdo')
-    if is_mdo or message.content[:4].lower() == 'mbot':
-        if message.author.id != global_vars.ALLOWED_ID and is_mdo:
-            await message.channel.send(f"<@{message.author.id}> you don't have permission to use this command.")
+    if not is_mdo and message.content[:4].lower() != 'mbot':
+        return  # Not a command we handle
+    
+    if message.author.id != global_vars.ALLOWED_ID and is_mdo:
+        await message.channel.send(f"<@{message.author.id}> you don't have permission to use this command.")
+        return
+
+    command_parts = message.content.split(" ")
+    command = command_parts[1] if len(command_parts) > 1 else None
+
+    if is_mdo:
+        logger = global_vars.logger
+        # catch the help command before parsing args
+        # if the parser is get the help command, it will stop the whole process
+        help_match = re.match(r"^mdo\s+([a-zA-Z0-9_-]+)\s+(?:-h|--help)\b", message.content)
+        if help_match:
+            help_message = mdo_parser.get_help_command(command)
+            await utils.send_long_message(message.channel, f"```\n{help_message}\n```")
+            logger.flush()
+            return
+
+        args = mdo_parser.parse_command(message)
+        if isinstance(args, str):
+            await utils.send_long_message(message.channel, f"```\n{args}\n```")
             return
         
-        # Command handler
-        command_parts = message.content.split(" ")
-        command = command_parts[1] if len(command_parts) > 1 else None
+        if args.wait:
+            seconds = utils.parse_duration(args.wait)
+            logger.INFO(f"Waiting for {args.wait} ({seconds} seconds) before executing command.")
+            await asyncio.sleep(seconds)
 
-        # Flags handler
-        flags = {'_args': []}
-        skip_next = False
-        for idx, part in enumerate(command_parts[2:]):
-            if skip_next:
-                skip_next = False
-                continue
-            if part.startswith("--"):
-                if len(command_parts) > idx + 3 and not command_parts[idx + 3].startswith("--"):
-                    flags[part] = command_parts[idx + 3]
-                    skip_next = True
+        if args.schedule:
+            try:
+                seconds = utils.epoch_to(args.schedule)
+                if seconds > 0:
+                    logger.INFO(f"Scheduling command to run in {args.schedule} ({seconds} seconds).")
+                    await asyncio.sleep(seconds)
                 else:
-                    flags[part] = True
-            else:
-                flags['_args'].append(part)
-        if is_mdo:
-            # Execute the corresponding function from the COMMAND_MAP
-            if command in COMMAND_MAP:
-                await COMMAND_MAP[command](client, message, flags)
-                if "--delete" in flags:
-                    await message.delete()
-                print("Executed: mdo", command)
+                    logger.ERROR(f"Invalid schedule time: {args.schedule}. Must be greater than 0.")
+            except Exception as e:
+                logger.ERROR(f"Error parsing schedule time: {e}")
+                logger.WARNING("Continuing without scheduling command.")
+
+        if args.verbose:
+            logger.set_level("VERBOSE")
+        elif args.debug:
+            logger.set_level("DEBUG")
         else:
-            if command in MBOT_COMMAND_MAP:
-                await MBOT_COMMAND_MAP[command](client, message, flags)
-                print("Executed: mbot", command)
+            logger.set_level("INFO")
+        logger.DEBUG(f"Debug args: {args}")
+        # Execute the corresponding function from the COMMAND_MAP
+        logger.VERBOSE(f"Executing command: {args.command}")
+        logger.DEBUG(f"Link to message that trigger command: {message.jump_url}")
+        logger.flush()
+
+        if args.command in mdo_rework.COMMAND_MAP:
+            if args.command == "help":
+                help_message = await mdo_rework.help_command(args)
+                await utils.send_long_message(message.channel, f"```\n{help_message}\n```")
+                return
+            
+            channel = utils.get_channel(args.channel)
+            content = await mdo_rework.COMMAND_MAP[args.command](args)
+            if content:
+                mention_str = ""
+                if len(args.mention) > 0:
+                    mention_str = " ".join([f"<@{id}>" for id in args.mention])
+                if args.everyone:
+                    mention_str = "@everyone"
+                
+                if mention_str != "":
+                    if args.after:
+                        content = f"{content}\n{mention_str}"
+                    else:
+                        content = f"{mention_str}\n{content}"
+                
+                if not args.quiet:
+                    if args.reply:
+                        msg = await channel.fetch_message(args.reply)
+                        if msg:
+                            await msg.reply(content)
+                        else:
+                            await channel.send(content)
+                    else:
+                        await channel.send(content)
+                logger.INFO("Executed: mdo " + args.command)
+            if args.delete:
+                await message.delete()
+            logger.set_level("INFO")  # Reset log level after command execution
+        else:
+            logger.ERROR(f"Command not found: mdo {args.command}")
+        logger.flush()  # Ensure all logs are sent
+        
+    else: # mbot command
+        # if command in MBOT_COMMAND_MAP:
+        #     await MBOT_COMMAND_MAP[command](client, message, flags)
+        #     print("Executed: mbot", command)
+        message.channel.send("`mbot` commands đang bảo trì")
 
 client.run(global_vars.TOKEN)

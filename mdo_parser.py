@@ -10,7 +10,7 @@ global_parser = argparse.ArgumentParser(add_help=False)
 global_parser.add_argument("-c", "--channel", help="Channel to send output message to")
 global_parser.add_argument("-g", "--guild", type=int, default=global_vars.MMM_SERVER_ID, help="Guild ID in the context of the command")
 global_parser.add_argument("-d", "--delete", action="store_true", help="Delete original message")
-global_parser.add_argument("-m", "--mention", action="append", default=[], help="Mention role or member (append mode)")
+global_parser.add_argument("-m", "--mention", action="append", default=None, help="Mention role or member (append mode)")
 global_parser.add_argument("-e", "--everyone", action="store_true", help="Mention everyone")
 global_parser.add_argument("-a", "--after", action="store_true", help="Mention in the end of the message")
 global_parser.add_argument("-q", "--quiet", action="store_true", help="Do not output message")
@@ -137,6 +137,8 @@ def parse_command(message: discord.Message):
                     args.guild = message.guild.id
                 if args.channel is None:
                     args.channel = message.channel.id
+                if args.mention is None:
+                    args.mention = []
                 return args
             except SystemExit:
                 # argparse threw an error or printed help, safely return error message

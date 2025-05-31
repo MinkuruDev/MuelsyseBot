@@ -183,6 +183,6 @@ async def on_message(message: discord.Message):
         # if command in MBOT_COMMAND_MAP:
         #     await MBOT_COMMAND_MAP[command](client, message, flags)
         #     print("Executed: mbot", command)
-        message.channel.send("`mbot` commands đang bảo trì")
+        await message.channel.send("`mbot` commands đang bảo trì")
 
 client.run(global_vars.TOKEN)

@@ -83,6 +83,13 @@ anniversary = subparsers.add_parser("anniversary", help="Check for anniversary a
 subparser_map["anniversary"] = anniversary
 
 # --- leaderboard ---
+index_lb = subparsers.add_parser("index-lb", help="Indexing leaderboard for selected month and year", parents=[global_parser])
+index_lb.add_argument("month", type=int, help="Month of the year")
+index_lb.add_argument("year", type=int, help="Year")
+index_lb.add_argument("-s", "--sam-diff", default=0, type=int, help="Super Active Month difficulty")
+subparser_map["index-lb"] = index_lb
+
+# --- leaderboard ---
 leaderboard = subparsers.add_parser("leaderboard", help="Generate message leaderboard", parents=[global_parser])
 leaderboard.add_argument("month", type=int, help="Month of the year")
 leaderboard.add_argument("year", type=int, help="Year")

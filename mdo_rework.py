@@ -319,17 +319,12 @@ async def process_messages_in_channel(channel, start_date, end_date, limit=None)
             local_count[msg.author.id] += 1
             local_total += 1
 
-    return local_count, local_total
+    return local_count, local_total, channel.id
 
-async def leaderboard_command(args):
+async def indexing_leaderboard_command(args):
     if args.guild != global_vars.MMM_SERVER_ID:
         logger.ERROR("Guild ID does not match the MMM server ID.")
         return "This command can only be used in the MMM server."
-    if not args.debug:
-        args.channel = global_vars.LEADERBOARD_CHANNEL_ID
-
-    args.after = True
-    args.mention.insert(0, f"&{global_vars.SERVER_UPDATE_NOTIFICATION_ROLE_ID}")
 
     year = args.year
     month = args.month
@@ -355,6 +350,7 @@ async def leaderboard_command(args):
     end_date = datetime(year + 1, 1, 1, tzinfo=pytz.timezone('Asia/Bangkok')) if month == 12 else datetime(year, month + 1, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
     
     msg_count = defaultdict(int)
+    channel_msg_count = defaultdict(int)
     total_messages = 0
     limit = 50 if args.debug else None  # Set limit to 50 for debugging, otherwise None
 
@@ -383,11 +379,65 @@ async def leaderboard_command(args):
     end_time = time.time()
     elapsed_time = end_time - start_time
     logger.INFO(f"Elapsed time: {elapsed_time:.2f} seconds")
+    time_str = f"{utils.current_time_utc7().strftime('%H:%M:%S %d/%m/%Y')}"
 
-    for local_count, local_total in results:
+    for local_count, local_total, channel_id in results:
         for user_id, count in local_count.items():
-            msg_count[user_id] += count
+            msg_count[f"{user_id}"] += count
         total_messages += local_total
+        channel_msg_count[f"{channel_id}"] += local_total
+    
+    top_users = sorted(msg_count.items(), key=lambda x: x[1], reverse=True)[:10]
+    is_sam = total_messages >= sam_total or (top_users[-1][1] if top_users else 0) >= sam_top10
+
+    results = {
+        "by_user": dict(msg_count),
+        "by_channel": dict(channel_msg_count),
+        "total": total_messages,
+        "total_user": len(msg_count),
+        "total_channel": len(channel_msg_count),
+        "sam_diff": sam_diff,
+        "is_sam": is_sam,
+        "last_update": time_str
+    }
+
+    # Save the results to the database
+    # print(results)
+    global_vars.db.collection("Leaderboard").document(f"{year}{month:02d}").set(results)
+
+    return f"Indexing completed for {month}/{year}."
+
+async def leaderboard_command(args):
+    if args.guild != global_vars.MMM_SERVER_ID:
+        logger.ERROR("Guild ID does not match the MMM server ID.")
+        return "This command can only be used in the MMM server."
+    if not args.debug:
+        args.channel = global_vars.LEADERBOARD_CHANNEL_ID
+
+    args.after = True
+    args.mention.insert(0, f"&{global_vars.SERVER_UPDATE_NOTIFICATION_ROLE_ID}")
+
+    year = args.year
+    month = args.month
+    guild = client.get_guild(global_vars.MMM_SERVER_ID)
+
+    # Fetch the leaderboard data from the database
+    doc = global_vars.db.collection("Leaderboard").document(f"{year}{month:02d}").get()
+
+    if not doc.exists:
+        logger.WARNING(f"Leaderboard data for {month}/{year} not found in the database. Start indexing...")
+        await indexing_leaderboard_command(args)
+        doc = global_vars.db.collection("Leaderboard").document(f"{year}{month:02d}").get()
+    
+    data = doc.to_dict()
+    msg_count = data.get("by_user", {})
+    total_messages = data.get("total", 0)
+    updated_at = data.get("last_update", "Unknown time")
+    user_count = data.get("total_user", 0)
+    channel_count = data.get("total_channel", 0)
+    sam_diff = data.get("sam_diff", 0)
+    sam_total = 50_000 + sam_diff * 10_000
+    sam_top10 = 2000 + sam_diff * 500
 
     extended = sorted(msg_count.items(), key=lambda x: x[1], reverse=True)[:20]
     top_users = extended[:10]
@@ -432,7 +482,7 @@ async def leaderboard_command(args):
     leaderboard += f"Độ khó của Super Active Month: **{sam_diff}**\n"
     leaderboard += f"*({sam_total} tổng tin nhắn **hoặc** người đứng top 10 đạt {sam_top10} tin nhắn)*\n\n"
     for i, (user_id, count) in enumerate(top_users, start=1):
-        user = guild.get_member(user_id)
+        user = guild.get_member(int(user_id))
         username = user.name if user else f"Unknown User {user_id}"
         leaderboard += f"{i}. <@{user_id}> ({discord.utils.escape_markdown(username)}) - {count} tin nhắn"
         if user_id in joint_top_1:
@@ -446,10 +496,14 @@ async def leaderboard_command(args):
     if is_sam:
         leaderboard += "\n:tada: **Hiển thị bảng xếp hạng đến #20 cho Super Active Month!** :tada:\n"
         for i, (user_id, count) in enumerate(extended[10:], start=11):
-            user = guild.get_member(user_id)
+            user = guild.get_member(int(user_id))
             username = user.name if user else f"Unknown User {user_id}"
             leaderboard += f"{i}. <@{user_id}> ({discord.utils.escape_markdown(username)}) - {count} tin nhắn\n"
     
+    leaderboard += f"\n*Bảng xếp hạng được cập nhật vào lúc **{updated_at}***\n"
+    leaderboard += f"*Tổng số member nhắn tin trong tháng: **{user_count}**," + \
+        f" Tổng số channel/threads/post được đếm: **{channel_count}***\n"
+
     return leaderboard
 
 async def fix_command(args):
@@ -598,4 +652,5 @@ COMMAND_MAP = {
     "fix": fix_command,
     "prune": prune_command,
     "set-birthday": set_birthday_command,
+    "index-lb": indexing_leaderboard_command,
 }

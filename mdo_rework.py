@@ -500,9 +500,10 @@ async def leaderboard_command(args):
             username = user.name if user else f"Unknown User {user_id}"
             leaderboard += f"{i}. <@{user_id}> ({discord.utils.escape_markdown(username)}) - {count} tin nhắn\n"
     
-    leaderboard += f"\n*Bảng xếp hạng được cập nhật vào lúc **{updated_at}***\n"
-    leaderboard += f"*Tổng số member nhắn tin trong tháng: **{user_count}**," + \
-        f" Tổng số channel/threads/post được đếm: **{channel_count}***\n"
+    leaderboard += f"\nBảng xếp hạng được cập nhật vào lúc **{updated_at}**\n"
+    leaderboard += f"Tổng số member nhắn tin trong tháng: **{user_count}**\n" + \
+        f"Tổng số channel/threads/post được đếm: **{channel_count}**\n" + \
+        f"Nếu bạn không trong bảng xếp hạng, có thể kiểm tra bằng lệnh `/ranking` tại <#1200793753259098242>\n"
 
     return leaderboard
 

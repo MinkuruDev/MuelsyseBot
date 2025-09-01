@@ -10,6 +10,7 @@ import daily
 import utils
 import re
 import discord_log
+import datetime
 
 client = global_vars.client
 tree = slash_commands.tree
@@ -24,7 +25,13 @@ async def do_daily():
     await mdo_rework.birthday_command(args)
     args = mdo_parser.parse_str_command(f"mdo anniversary")
     await mdo_rework.anniversary_command(args)
+    previous_day = utils.current_time_utc7() - datetime.timedelta(days=1)
+    mm = previous_day.month
+    yyyy = previous_day.year
+    args = mdo_parser.parse_str_command(f"mdo index-lb {mm} {yyyy}")
     print("Executed daily task at:", utils.current_time_utc7())
+    res = await mdo_rework.indexing_leaderboard_command(args)
+    print(res)
 
 
 @client.event

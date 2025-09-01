@@ -339,12 +339,12 @@ async def indexing_leaderboard_command(args):
     # Find all matching categories
     categories = [cat for cat in guild.categories if cat.name in category_names]
 
+    bot_channels = []
     if not categories:
-        logger.WARNING("None of the specified categories were found.")
-        return
-
-    # Collect all channel IDs from the matched categories
-    bot_channels = [channel.id for category in categories for channel in category.channels]
+        logger.WARNING("None of the Bot categories were found.")
+    else:
+        # Collect all channel IDs from the matched categories
+        bot_channels = [channel.id for category in categories for channel in category.channels]
     
     start_date = datetime(year, month, 1, tzinfo=pytz.timezone('Asia/Bangkok'))
     end_date = datetime(year + 1, 1, 1, tzinfo=pytz.timezone('Asia/Bangkok')) if month == 12 else datetime(year, month + 1, 1, tzinfo=pytz.timezone('Asia/Bangkok'))

@@ -5,6 +5,8 @@ import mdo_commands
 import mdo_parser
 import mdo_rework
 import mbot_commands
+import mbot_parser
+import mbot_rework
 import slash_commands
 import daily
 import utils
@@ -187,9 +189,30 @@ async def on_message(message: discord.Message):
         logger.flush()  # Ensure all logs are sent
         
     else: # mbot command
-        # if command in MBOT_COMMAND_MAP:
-        #     await MBOT_COMMAND_MAP[command](client, message, flags)
-        #     print("Executed: mbot", command)
-        await message.channel.send("`mbot` commands đang bảo trì")
+        # catch the help command before parsing args
+        # if the parser is get the help command, it will stop the whole process
+        help_match = re.match(r"^mbot\s+([a-zA-Z0-9_-]+)\s+(?:-h|--help)\b", message.content)
+        if help_match:
+            help_message = mbot_parser.get_help_command(command)
+            await utils.send_long_message(message.channel, f"```\n{help_message}\n```")
+            return
+
+        args = mbot_parser.parse_command(message)
+        if isinstance(args, str):
+            await utils.send_long_message(message.channel, f"```\n{args}\n```")
+            return
+        
+        # print(args)
+        
+        if args.command in mbot_rework.MBOT_COMMAND_MAP:
+            if args.command == "help":
+                help_message = await mbot_rework.help_command(args)
+                await utils.send_long_message(message.channel, f"```\n{help_message}\n```")
+                return
+            
+            content = await mbot_rework.MBOT_COMMAND_MAP[args.command](args)
+            await message.channel.send(content)
+        else:
+            await message.channel.send(f"Command not found: mbot {args.command}")
 
 client.run(global_vars.TOKEN)

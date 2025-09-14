@@ -354,7 +354,7 @@ async def indexing_leaderboard_command(args):
     total_messages = 0
     limit = 50 if args.debug else None  # Set limit to 50 for debugging, otherwise None
 
-    very_active_channels = [1160783654168035381]
+    very_active_channels = [1160783654168035381, 1398657031300190258]
     messagable_channels = list(guild.text_channels) + list(guild.threads)
     
     tasks = []

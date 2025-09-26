@@ -15,6 +15,7 @@ RELEASE = int(os.environ.get("RELEASE"))
 WORKDIR = os.environ.get("WORKDIR")
 FB_ACCESS_TOKEN = os.getenv("FB_ACCESS_TOKEN")
 MAKI_API_GUILD_TOKEN = os.getenv("MAKI_API_TOKEN")
+TOTP_SECRET = os.getenv("TOTP_SECRET")
 
 # command server
 PING_CHANNEL_ID = 1174532883420024893
@@ -69,6 +70,7 @@ MWC_PAGE_ID = 107355032425494
 
 SERVER_NICKNAME = "Muelsyse Clone"
 RUNNED = False
+MFA_STATUS = True # default True
 
 # Discord client
 intents = discord.Intents.default()

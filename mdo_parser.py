@@ -20,6 +20,7 @@ global_parser.add_argument("-D", "--debug", action="store_true", default=(global
 global_parser.add_argument("-V", "--verbose", action="store_true", help="Verbose logging")
 global_parser.add_argument("-W", "--wait", help="Wait for the provided time (duration, ex: 1h30m5s) before executing the command")
 global_parser.add_argument("-S", "--schedule", help="Schedule time (in the time format: HH:MM:SS-dd/mm/yyyy) to execute the command")
+global_parser.add_argument("-O", "--otp", type=str, help="OTP code for MFA (if enabled)")
 
 # --- Main parser ---
 parser = argparse.ArgumentParser(prog="mdo", description="mdo command parser", parents=[global_parser])
@@ -106,6 +107,12 @@ prune.add_argument("member", help="Member or member ID to prune messages for")
 prune.add_argument("number", type=int, help="Number of messages to delete")
 prune.add_argument("-l", "--limit", type=int, default=50, help="Limit of messages to check")
 subparser_map["prune"] = prune
+
+# --- mfa ---
+mfa = subparsers.add_parser("mfa", help="Show or enable/disable MFA", parents=[global_parser])
+mfa.add_argument("--enable", action="store_true", help="Enable MFA")
+mfa.add_argument("--disable", action="store_true", help="Disable MFA")
+subparser_map["mfa"] = mfa
 
 def get_help_command(command_name: str = None):
     """

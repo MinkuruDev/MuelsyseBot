@@ -15,6 +15,7 @@ import random
 import slash_commands
 import asyncio
 import time
+import totp
 
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
@@ -639,6 +640,40 @@ async def set_birthday_command(args):
     logger.VERBOSE(f"Set birthday for user {user_id} to {dd}/{mm}.")
     return f"Birthday for user <@{user_id}> set to {dd}/{mm}."
 
+async def mfa_command(args):
+    if args.enable and args.disable:
+        return "Cannot enable and disable MFA at the same time."
+    
+    elif args.enable:
+        if global_vars.MFA_STATUS:
+            return "MFA is already enabled."
+        if not args.otp:
+            return "OTP is required to enable MFA. (Use --otp <code>)"
+        otp = args.otp
+        if not totp.validate_totp(otp):
+            logger.ERROR(f"Invalid OTP for enabling MFA: {otp}")
+            return "Invalid OTP"
+        logger.INFO(f"MFA enabled")
+        global_vars.MFA_STATUS = True
+        return "MFA has been enabled."
+    
+    elif args.disable:
+        if not global_vars.MFA_STATUS:
+            return "MFA is already disabled."
+        if not args.otp:
+            return "OTP is required to disable MFA. (Use --otp <code>)"
+        otp = args.otp
+        if not totp.validate_totp(otp):
+            logger.ERROR(f"Invalid OTP for disabling MFA: {otp}")
+            return "Invalid OTP"
+        logger.INFO(f"MFA disabled")
+        global_vars.MFA_STATUS = False
+        return "MFA has been disabled."
+
+    else:
+        status = "enabled" if global_vars.MFA_STATUS else "disabled"
+        return f"MFA is currently {status}."
+
 COMMAND_MAP = {
     "help": help_command,
     "send": send_command,
@@ -654,4 +689,5 @@ COMMAND_MAP = {
     "prune": prune_command,
     "set-birthday": set_birthday_command,
     "index-lb": indexing_leaderboard_command,
+    "mfa": mfa_command,
 }

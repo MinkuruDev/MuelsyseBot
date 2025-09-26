@@ -674,6 +674,40 @@ async def mfa_command(args):
         status = "enabled" if global_vars.MFA_STATUS else "disabled"
         return f"MFA is currently {status}."
 
+async def kick_command(args):
+    guild = client.get_guild(args.guild)
+    member = utils.get_member(guild, args.member)
+    if not member:
+        return f"Member {args.member} not found"
+    logger.VERBOSE(f"Kick command for member: {member} in guild: {guild.name} (ID: {guild.id})")
+
+    reason = " ".join(args.reason) if args.reason else "No reason provided"
+    
+    try:
+        await member.kick(reason=reason)
+        logger.VERBOSE(f"Kicked member {member.name} with reason: {reason}")
+        return f"{member.mention} has been kicked from the server.\nReason: {reason}"
+    except Exception as e:
+        logger.ERROR(f"Error kicking member {member.name}: {e}")
+        return f"An error occurred while kicking the member: {e}"
+
+async def ban_command(args):
+    guild = client.get_guild(args.guild)
+    member = utils.get_member(guild, args.member)
+    if not member:
+        return f"Member {args.member} not found"
+    logger.VERBOSE(f"Kick command for member: {member} in guild: {guild.name} (ID: {guild.id})")
+
+    reason = " ".join(args.reason) if args.reason else "No reason provided"
+    
+    try:
+        await member.ban(reason=reason, delete_message_days=7)
+        logger.VERBOSE(f"Banned member {member.name} with reason: {reason}")
+        return f"{member.mention} has been banned from the server.\nReason: {reason}"
+    except Exception as e:
+        logger.ERROR(f"Error banning member {member.name}: {e}")
+        return f"An error occurred while banning the member: {e}"
+
 COMMAND_MAP = {
     "help": help_command,
     "send": send_command,
@@ -690,4 +724,11 @@ COMMAND_MAP = {
     "set-birthday": set_birthday_command,
     "index-lb": indexing_leaderboard_command,
     "mfa": mfa_command,
+    "kick": kick_command,
+    "ban": ban_command,
 }
+
+REQUIRE_MFA = [
+    "kick",
+    "ban",
+]

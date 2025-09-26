@@ -13,6 +13,7 @@ import utils
 import re
 import discord_log
 import datetime
+import totp
 
 client = global_vars.client
 tree = slash_commands.tree
@@ -157,6 +158,17 @@ async def on_message(message: discord.Message):
                 return
             
             channel = utils.get_channel(args.channel)
+            if args.command in mdo_rework.REQUIRE_MFA and global_vars.MFA_STATUS:
+                if not args.otp:
+                    await message.channel.send(f"<@{message.author.id}> this command requires MFA. Please provide the OTP using `--otp <code>`.")
+                    logger.ERROR(f"Command {args.command} requires MFA but no OTP provided.")
+                    logger.flush()
+                    return
+                if not totp.validate_totp(args.otp):
+                    await message.channel.send(f"<@{message.author.id}> invalid OTP code. Please try again.")
+                    logger.ERROR(f"Invalid OTP code provided for command {args.command}.")
+                    logger.flush()
+                    return
             content = await mdo_rework.COMMAND_MAP[args.command](args)
             if content:
                 mention_str = ""

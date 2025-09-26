@@ -114,6 +114,18 @@ mfa.add_argument("--enable", action="store_true", help="Enable MFA")
 mfa.add_argument("--disable", action="store_true", help="Disable MFA")
 subparser_map["mfa"] = mfa
 
+# --- kick ---
+kick = subparsers.add_parser("kick", help="Kick a member", parents=[global_parser])
+kick.add_argument("member", help="Member or member ID to kick")
+kick.add_argument("reason", nargs=argparse.REMAINDER, help="Reason for kick")
+subparser_map["kick"] = kick
+
+# --- ban ---
+ban = subparsers.add_parser("ban", help="Ban a member", parents=[global_parser])
+ban.add_argument("member", help="Member or member ID to ban")
+ban.add_argument("reason", nargs=argparse.REMAINDER, help="Reason for ban")
+subparser_map["ban"] = ban
+
 def get_help_command(command_name: str = None):
     """
     Get the help command for a specific command.

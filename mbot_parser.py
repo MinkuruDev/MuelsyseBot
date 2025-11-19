@@ -42,6 +42,12 @@ ranking.add_argument("month", type=int, nargs="?", default=None, help="Month to 
 ranking.add_argument("year", type=int, nargs="?", default=None, help="Year to see ranking (e.g., 2023). Leave empty for last month")
 subparser_map["ranking"] = ranking
 
+# --- muzzled ---
+muzzled = subparsers.add_parser("muzzled", help="Try to muzzled a member", parents=[global_parser])
+muzzled.add_argument("target", help="Target or target id to muzzled")
+muzzled.add_argument("reason", nargs=argparse.REMAINDER, help="Reason for muzzled")
+subparser_map["muzzled"] = muzzled
+
 def get_help_command(command_name: str = None):
     """
     Get the help command for a specific command.
@@ -77,6 +83,7 @@ def parse_command(message: discord.Message):
                 args = parser.parse_args(args_list)
                 args.member = message.author.id
                 args.guild = message.guild.id
+                args.channel = message.channel.id
                 return args
             except SystemExit:
                 # argparse threw an error or printed help, safely return error message

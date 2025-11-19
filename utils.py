@@ -6,6 +6,7 @@ import pytz
 
 from datetime import datetime, timedelta, timezone
 from typing import Tuple
+from slash_commands import nick_numbers
 
 def get_number_from_nick(guild: discord.Guild, nick: str) -> int:
     if not re.match(rf"^{global_vars.SERVER_NICKNAME}( \d+)?$", nick):
@@ -133,9 +134,17 @@ def get_channel(channel) -> discord.TextChannel:
 
 def get_member(guild: discord.Guild, member) -> discord.Member:
     # member can be in format of <@123456789012345678> or 123456789012345678
-    member_id = int(member[2:-1]) if member.startswith("<@") and member.endswith(">") else int(member)
+    # member_id = int(member[2:-1]) if member.startswith("<@") and member.endswith(">") else int(member)
+    if member.startswith("<@") and member.endswith(">"):
+        member_id = int(member[2:-1])
+    else:
+        try:
+            member_id = int(member)
+        except Exception as e:
+            member_id = -1
+    if member_id < 1_000_000:
+        member_id = nick_numbers.get(member_id, 0)
     return guild.get_member(member_id)
-
 
 def exist_date(d, m):
     if d > 31 or d < 1:

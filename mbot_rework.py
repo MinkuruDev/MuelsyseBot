@@ -219,7 +219,7 @@ async def muzzled(args):
         # reverse effect
         timeout_duration = await timeout_with_rate(commander, rate/3.6, reason="You Gotta Move reverse effect")
         if timeout_duration > 0:
-            return f"[Muzzle reverse]\n<@{commander.id}> You have been timed out for {timeout_duration} seconds.\n({(rate * 0.036):.2f}% change to Reverse and ({(rate/3.6):.2f}% for 36s))"
+            return f"[Muzzle reverse]\n<@{commander.id}> You have been timed out for {timeout_duration} seconds.\n({((100 - rate) * 0.036):.2f}% change to Reverse and ({(rate/3.6):.2f}% for 36s))"
 
     return f"[Muzzle failed], You failed to muzzle with the success change is {rate:.2f}%" 
     

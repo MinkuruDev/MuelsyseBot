@@ -133,20 +133,58 @@ async def check_birthday_command(args):
         dd, mm = mdo_rework.birthday_data[uid]
         return f"<@{uid}> birthday is: {dd}/{mm} (dd/mm format)"
 
-async def timeout_with_rate(member: discord.Member, rate: float, reason: str = None) -> int:
+async def timeout_with_rate(member: discord.Member, rate: float, reason: str = None) -> dict[str, float] | None:
     duration = 3
+    _369_rate = 0.36
     if random.random() * 100 < rate:
         duration = 36 
+        if rate >= 100.0:
+            _369_rate = 3.6 + (rate - 100.0) * 0.36
+        if random.random() * 100 < _369_rate:
+            duration = 369
     elif random.random() * 100 < 50:
         duration = 6
     
     try:
-        timeout_duration = timedelta(seconds=duration)
-        await member.timeout(timeout_duration, reason=reason)
+        muzzle_result = timedelta(seconds=duration)
+        await member.timeout(muzzle_result, reason=reason)
     except Exception as e:
         print(f"Failed to timeout <@{member.id}>: {str(e)}")
-        return 0
-    return duration
+        return None
+    
+    result = {
+        'duration': duration,
+        '369_rate': _369_rate,
+    }
+    if rate >= 100.0:
+        result['36_rate'] = 100.0 - _369_rate
+        result['3_rate'] = 0.0
+    else:
+        result['36_rate'] = rate - _369_rate
+        result['3_rate'] = (100.0 - rate) / 2
+    return result
+
+def format_output(success = False, reverse = False, mod_action = False, rate = 0.0, target_id = None, **kwargs) -> str:
+    if not success:
+        res = '**[Muzzle failed]**\n'
+        res += f'**Success chance**: {rate:.2f}%'
+        return res
+
+    res = '**[Muzzle reverse]**' if reverse else '**[Muzzle success]**'
+    if mod_action:
+        res += ' (Mod action)'
+    res += '\n'
+
+    res += f'<@{target_id}> has been timed out for {kwargs.get('duration', 0)} seconds\n'
+    res += f'**Reason**: {kwargs.get('reason', 'No reason provided')}\n'
+    res += f'**Timeout chance**: {rate:.2f}%\n' if not reverse else f'**Reverse change**: {rate:.2f}%\n'
+    res += f'**Duration rarity**:\n'
+    res += f'- 369s: {kwargs.get('369_rate', 0.0):.2f}%\n'
+    res += f'- 36s: {kwargs.get('36_rate', 0.0):.2f}%\n'
+    res += f'- 6s: {kwargs.get('3_rate', 0.0):.2f}%\n'
+    res += f'- 3s: {kwargs.get('3_rate', 0.0):.2f}%\n'
+
+    return res
 
 async def muzzled(args):
     you_gotta_move_role_id = 1440204182740144230
@@ -158,35 +196,34 @@ async def muzzled(args):
     if target is None:
         return f"Target: {args.target} not found"
 
-    # check if commander have you gotta move role
-    if you_gotta_move_role_id in [role.id for role in commander.roles]:
-        # reverse effect
-        timeout_duration = await timeout_with_rate(commander, 100.0, reason="You Gotta Move reverse effect")
-        if timeout_duration > 0:
-            return f"[Muzzle reverse]\n<@{commander.id}> You are the target for muzzled, not the commander!\nYou have been timed out for {timeout_duration} seconds."
-    
-    # Check if target not have You Gotta Move role
-    if not you_gotta_move_role_id in [role.id for role in target.roles]:
-        return f"<@{target.id}> is not muzzled."
-
     # Check if target has timeout permmision
     if target.guild_permissions.moderate_members:
         # reverse effect
-        timeout_duration = await timeout_with_rate(commander, 100.0, reason="You Gotta Move reverse effect")
-        if timeout_duration > 0:
-            return f"[Muzzle reverse]\n<@{commander.id}> You cannot muzzle a moderator\nYou have been timed out for {timeout_duration} seconds."
+        muzzle_result = await timeout_with_rate(commander, 190.0, reason="You Gotta Move reverse effect")
+        if muzzle_result is not None:
+            return format_output(True, True, False, 190.0, commander.id, reason="Are you trying to muzzled a mod?", **muzzle_result)
+
+    # check if commander have you gotta move role
+    if you_gotta_move_role_id in [role.id for role in commander.roles]:
+        # reverse effect
+        muzzle_result = await timeout_with_rate(commander, 140.0, reason="You Gotta Move reverse effect")
+        if muzzle_result is not None:
+            return format_output(True, True, False, 140.0, commander.id, reason="You are the target for muzzled, not the commander", **muzzle_result)
+    
+    # Check if target not have You Gotta Move role
+    if not you_gotta_move_role_id in [role.id for role in target.roles]:
+        return f"<@{target.id}> can't be muzzled."
 
     # get 12 recent messages from channel
     channel = client.get_channel(args.channel)
-    if channel is None:
-        return f"Channel ID {args.channel} not found in guild."
     counter = 0
     async for msg in channel.history(limit=12):
-        if msg.author.id == client.user.id and msg.content.startswith("[Muzzle"):
+        if msg.author.id == client.user.id and msg.content.startswith("**[Muzzle"):
             return f"Muzzle command is on cooldown in this channel. Send {12 - counter} more messages to use again."
         counter += 1
 
-    rate = 3.6
+    rate = 0
+    rr = 3.6
     msg_flag = False
     async for msg in channel.history(limit=36):
         if msg.author.id == target.id:
@@ -198,6 +235,7 @@ async def muzzled(args):
                 rate += 18.0
             else:
                 rate += 3.6
+                rr += 3.6
         if msg.author.id == commander.id:
             rate += 3.6
 
@@ -206,23 +244,22 @@ async def muzzled(args):
 
     # check if commander has timeout permission
     if commander.guild_permissions.moderate_members:
-        timeout_duration = await timeout_with_rate(target, 100.0, reason)
-        if timeout_duration > 0:
-            return f"[Muzzle success]\n<@{target.id}> has been timed out for {timeout_duration} seconds.\nReason: {reason}.\n(Mod action)"
+        muzzle_result = await timeout_with_rate(target, 100.0+rate, reason)
+        if muzzle_result is not None:
+            return format_output(True, False, True, 100.0+rate, target.id, reason=reason, **muzzle_result)
 
     # check if timeout success:
     if random.random() * 100 < rate:
-        timeout_duration = await timeout_with_rate(target, rate, reason)
-        if timeout_duration > 0:
-            return f"[Muzzle success]\n<@{target.id}> has been timed out for {timeout_duration} seconds.\nReason: {reason}.\n({rate:.2f}% change to timeout and ({rate:.2f}% for 36s)"
-    elif random.random() * 100 < 3.6:
+        muzzle_result = await timeout_with_rate(target, rate, reason)
+        if muzzle_result is not None:
+            return format_output(True, False, False, rate, target.id, reason=reason, **muzzle_result)
+    elif random.random() * 100 < rr:
         # reverse effect
-        timeout_duration = await timeout_with_rate(commander, rate/3.6, reason="You Gotta Move reverse effect")
-        if timeout_duration > 0:
-            return f"[Muzzle reverse]\n<@{commander.id}> You have been timed out for {timeout_duration} seconds.\n({((100 - rate) * 0.036):.2f}% change to Reverse and ({(rate/3.6):.2f}% for 36s))"
+        muzzle_result = await timeout_with_rate(commander, rate/3.6, reason="You Gotta Move reverse effect")
+        if muzzle_result is not None:
+            return format_output(True, True, False, (1-rate/100)*rr, commander.id, reason="UNO Reverse", **muzzle_result)
 
-    return f"[Muzzle failed], You failed to muzzle with the success change is {rate:.2f}%" 
-    
+    return format_output(False, False, False, rate, target.id)
 
 MBOT_COMMAND_MAP = {
     'help': help_command,

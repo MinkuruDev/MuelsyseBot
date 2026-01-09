@@ -126,6 +126,13 @@ ban.add_argument("member", help="Member or member ID to ban")
 ban.add_argument("reason", nargs=argparse.REMAINDER, help="Reason for ban")
 subparser_map["ban"] = ban
 
+# --- give-role ---
+give_role = subparsers.add_parser("give-role", help="Give a role to a member", parents=[global_parser])
+give_role.add_argument("member", help="Member or member ID to give role to")
+give_role.add_argument("role", type=int, help="Role ID to give the role")
+give_role.add_argument("--duration", help="Duration to keep the role (e.g., 1h, 30m, 15s, 1d12h30m6s)")
+subparser_map["give-role"] = give_role
+
 def get_help_command(command_name: str = None):
     """
     Get the help command for a specific command.

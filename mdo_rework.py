@@ -708,6 +708,43 @@ async def ban_command(args):
         logger.ERROR(f"Error banning member {member.name}: {e}")
         return f"An error occurred while banning the member: {e}"
 
+async def give_role_command(args):
+    guild = client.get_guild(args.guild)
+    member = utils.get_member(guild, args.member)
+    if not member:
+        return f"Member {args.member} not found"
+    
+    role = guild.get_role(args.role)
+    if not role:
+        return f"Role {args.role} not found"
+    
+    logger.VERBOSE(f"Give-role command for member: {member} with role: {role} in guild: {guild.name} (ID: {guild.id})")
+    
+    try:
+        await member.add_roles(role, reason="Role assigned via give-role command")
+        logger.VERBOSE(f"Assigned role {role.name} to member {member.name}")
+        
+        if args.duration:
+            seconds = utils.parse_duration(args.duration)
+            if not seconds:
+                logger.ERROR(f"Invalid duration format provided: {args.duration}. Role {role.name} assigned without duration to member {member.name}.")
+                return "Invalid duration format. Use e.g., 1h, 30m, 15s, 1d12h30m6s, role assigned permanently."
+            
+            async def remove_role_after_delay():
+                await asyncio.sleep(seconds)
+                try:
+                    await member.remove_roles(role, reason="Temporary role duration expired")
+                    logger.INFO(f"Removed temporary role {role.name} from member {member.name} after duration")
+                except Exception as e:
+                    logger.ERROR(f"Error removing temporary role {role.name} from member {member.name}: {e}")
+            
+            asyncio.create_task(remove_role_after_delay())
+        
+        return f"Role {role.name} has been assigned to {member.mention}."
+    except Exception as e:
+        logger.ERROR(f"Error assigning role {role.name} to member {member.name}: {e}")
+        return f"An error occurred while assigning the role: {e}"
+
 COMMAND_MAP = {
     "help": help_command,
     "send": send_command,
@@ -726,6 +763,7 @@ COMMAND_MAP = {
     "mfa": mfa_command,
     "kick": kick_command,
     "ban": ban_command,
+    "give-role": give_role_command,
 }
 
 REQUIRE_MFA = [

@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import mbot_parser
 import utils
@@ -5,6 +6,8 @@ import mdo_rework
 import slash_commands
 import global_vars
 import random
+import mdo_parser
+import mdo_rework
 
 from datetime import timedelta
 
@@ -261,6 +264,80 @@ async def muzzled(args):
 
     return format_output(False, False, False, rate, target.id)
 
+async def deathmatch(args):
+    if args.round % 2 == 0 or args.round < 1 or args.round > 9:
+        return "Round must be an odd number between 1 and 9"
+    seconds = utils.parse_duration(args.duration)
+    if seconds is None:
+        return "Invalid duration format. Use formats like '1d', '12h', etc."
+    if seconds > 3 * 24 * 3600:
+        return "Duration must be less than or equal to 3 days"
+    target = utils.get_member(client.get_guild(args.guild), str(args.target))
+    if target is None:
+        return f"Target: {args.target} not found"
+    commander = utils.get_member(client.get_guild(args.guild), str(args.member))
+    if commander is None:
+        return f"Commander: {args.member} not found"
+    you_gotta_move_role_id = 1440204182740144230
+    if you_gotta_move_role_id in [role.id for role in target.roles]:
+        return f"<@{target.id}> can't be challenged to deathmatch. They are already in You Gotta Move role"
+    if you_gotta_move_role_id in [role.id for role in commander.roles]:
+        return f"<@{commander.id}> You can't challenge to deathmatch. You are already in You Gotta Move role"
+    if target.guild_permissions.moderate_members:
+        return f"<@{target.id}> is a moderator and can't be challenged to deathmatch"
+
+    extra_rate = 0.0
+    channel = client.get_channel(args.channel)
+    async for msg in channel.history(limit=36):
+        if msg.author.id == target.id or msg.author.id == commander.id:
+            extra_rate += 3.6 - 7.2 * random.random()
+
+    max_score = args.round // 2 + 1
+    target_score = 0
+    commander_score = 0
+    rate = 50.0 + extra_rate
+
+    msg = f"# DEATHMATCH BATTLE\n"
+    msg += f"<@{commander.id}> vs <@{target.id}>\n"
+    msg += f"Format: Best of {args.round} rounds\n"
+    msg += f"Round win rate:\n"
+    msg += f"- {commander.name}: {rate:.2f}%\n"
+    msg += f"- {target.name}: {100.0 - rate:.2f}%\n"
+    await channel.send(msg)
+    await asyncio.sleep(3)
+
+    for round in range(1, args.round + 1):
+        if random.random() * 100 < rate:
+            commander_score += 1
+            winner = commander
+        else:
+            target_score += 1
+            winner = target
+        
+        msg = f"**Round {round}**\n"
+        msg += f"The fate chooses..."
+        await channel.send(msg)
+        await asyncio.sleep(1)
+        await channel.send(f"**{winner.name} wins this round!**")
+        msg = f"Score: <@{commander.id}> {commander_score} - {target_score} <@{target.id}>\n"
+        await channel.send(msg)
+        await asyncio.sleep(3)
+
+        if commander_score == max_score or target_score == max_score:
+            break
+    
+    if commander_score > target_score:
+        winner = commander
+        loser = target
+    else:
+        winner = target
+        loser = commander
+    
+    a = mdo_parser.parse_str_command(f"mdo give-role {loser.id} {you_gotta_move_role_id} --duration {args.duration}")
+    await mdo_rework.give_role_command(a)
+    return f"**{winner.mention} wins the deathmatch!**\n<@{loser.id}> has been given You Gotta Move role for {args.duration}."
+
+
 MBOT_COMMAND_MAP = {
     'help': help_command,
     'set-birthday': birthday_set_command,
@@ -268,4 +345,5 @@ MBOT_COMMAND_MAP = {
     'set-number': set_number_command,
     'ranking': ranking_command,
     'muzzled': muzzled,
+    'deathmatch': deathmatch,
 }

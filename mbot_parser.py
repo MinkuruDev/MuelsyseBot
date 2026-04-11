@@ -48,6 +48,13 @@ muzzled.add_argument("target", help="Target or target id to muzzled")
 muzzled.add_argument("reason", nargs=argparse.REMAINDER, help="Reason for muzzled")
 subparser_map["muzzled"] = muzzled
 
+# --- deathmatch ---
+deathmatch = subparsers.add_parser("deathmatch", help="Challange a member to deathmatch", parents=[global_parser])
+deathmatch.add_argument("target", help="Target or target id to challenge")
+deathmatch.add_argument("-d", "--duration", type=str, default="1d", help="Duration for the You gotta move role (e.g., 1d, 12h)")
+deathmatch.add_argument("-r", "--round", type=int, default=3, help="Number of rounds for the deathmatch (must be odd, less than 10, default: 3)")
+subparser_map["deathmatch"] = deathmatch
+
 def get_help_command(command_name: str = None):
     """
     Get the help command for a specific command.

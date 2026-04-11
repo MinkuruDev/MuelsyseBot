@@ -372,7 +372,7 @@ async def indexing_leaderboard_command(args):
             continue
         
         logger.INFO(f"Checking: <#{active_channel_id}>")
-        for day_start, day_end in split_into_equal_timestamps(start_date, end_date, 2):
+        for day_start, day_end in split_into_equal_timestamps(start_date, end_date, 1):
             tasks.append(process_messages_in_channel(channel, day_start, day_end, limit=limit))
     
     start_time = time.time()

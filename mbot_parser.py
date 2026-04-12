@@ -51,7 +51,7 @@ subparser_map["muzzled"] = muzzled
 # --- deathmatch ---
 deathmatch = subparsers.add_parser("deathmatch", help="Challange a member to deathmatch", parents=[global_parser])
 deathmatch.add_argument("target", help="Target or target id to challenge")
-deathmatch.add_argument("-d", "--duration", type=str, default="1d", help="Duration for the You gotta move role (e.g., 1d, 12h)")
+deathmatch.add_argument("-d", "--duration", type=str, default="3h", help="Duration for the You gotta move role (e.g.,60m, 1d, 12h)")
 deathmatch.add_argument("-r", "--round", type=int, default=3, help="Number of rounds for the deathmatch (must be odd, less than 10, default: 3)")
 subparser_map["deathmatch"] = deathmatch
 

@@ -269,7 +269,7 @@ async def deathmatch(args):
         return "Round must be an odd number between 1 and 9"
     seconds = utils.parse_duration(args.duration)
     if seconds is None:
-        return "Invalid duration format. Use formats like '1d', '12h', etc."
+        return "Invalid duration format. Use formats like '60m', '1d', '12h', etc."
     if seconds > 3 * 24 * 3600:
         return "Duration must be less than or equal to 3 days"
     target = utils.get_member(client.get_guild(args.guild), str(args.target))
@@ -286,27 +286,27 @@ async def deathmatch(args):
     if target.guild_permissions.moderate_members:
         return f"<@{target.id}> is a moderator and can't be challenged to deathmatch"
 
-    extra_rate = 0.0
     channel = client.get_channel(args.channel)
-    async for msg in channel.history(limit=36):
-        if msg.author.id == target.id or msg.author.id == commander.id:
-            extra_rate += 3.6 - 7.2 * random.random()
-
-    max_score = args.round // 2 + 1
-    target_score = 0
-    commander_score = 0
-    rate = 50.0 + extra_rate
-
     msg = f"# DEATHMATCH BATTLE\n"
     msg += f"<@{commander.id}> vs <@{target.id}>\n"
     msg += f"Format: Best of {args.round} rounds\n"
-    msg += f"Round win rate:\n"
-    msg += f"- {commander.name}: {rate:.2f}%\n"
-    msg += f"- {target.name}: {100.0 - rate:.2f}%\n"
     await channel.send(msg)
     await asyncio.sleep(3)
 
+    commander_score = 0
+    target_score = 0
+    max_score = args.round // 2 + 1
+
     for round in range(1, args.round + 1):
+        extra_rate = 10.0 - 20.0 * random.random()
+        rate = 50.0 + extra_rate
+        msg = f"## Round {round}\n"
+        msg += f"Round win rate:\n"
+        msg += f"- **{commander.name}**: {rate:.2f}%\n"
+        msg += f"- **{target.name}**: {100.0 - rate:.2f}%\n"
+        msg += f"The fate chooses..."
+        await channel.send(msg)
+
         if random.random() * 100 < rate:
             commander_score += 1
             winner = commander
@@ -314,12 +314,9 @@ async def deathmatch(args):
             target_score += 1
             winner = target
         
-        msg = f"**Round {round}**\n"
-        msg += f"The fate chooses..."
-        await channel.send(msg)
-        await asyncio.sleep(1)
-        await channel.send(f"**{winner.name} wins this round!**")
-        msg = f"Score: <@{commander.id}> {commander_score} - {target_score} <@{target.id}>\n"
+        await asyncio.sleep(3)
+        msg = f"**{winner.name}** wins this round!\n"
+        msg += f"Score: **{commander.name}**: {commander_score} - {target_score} **{target.name}**\n"
         await channel.send(msg)
         await asyncio.sleep(3)
 

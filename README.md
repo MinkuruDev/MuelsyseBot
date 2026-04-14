@@ -8,21 +8,24 @@ Bot to manage **Muelsyse in the multiverse of madness** discord server
 
 # Features
 ## For admin
-Command for admin is [mdo command](./mdo_commands.py)
+Command for admin is [mdo command](./mdo_rework.py)
 - Send messages
 - Edit messages
+- Send announcements
 - Timeout member
+- Add, remove, or fix roles
+- Kick or ban members
 - Delete recent messages from specific member
 - Set server nickname
-- Notify facebook (semi auto)
-- Check birthday to assign/remove role
+- Notify Facebook (semi auto)
+- Check and assign birthday/anniversary roles
+- Index and view server leaderboard
+- Multi-factor authentication (MFA) toggle
 
 ## For everyone
-Command is [mbot command](./mbot_commands.py) and [slash command](./slash_commands.py)
+Command is [mbot command](./mbot_rework.py) and [slash command](./slash_commands.py)
 - Set birthday 
-- See birthday of other
-- Create custom role
-- Edit custom role
-
-## Feature will be add in the future
-- Set role (for staff)
+- See birthday of others
+- Set nickname number
+- View personal leaderboard ranking
+- Use muzzle and deathmatch mini-games

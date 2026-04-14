@@ -745,6 +745,111 @@ async def give_role_command(args):
         logger.ERROR(f"Error assigning role {role.name} to member {member.name}: {e}")
         return f"An error occurred while assigning the role: {e}"
 
+async def lb_role_command(args):
+    if args.guild != global_vars.MMM_SERVER_ID:
+        logger.ERROR("Guild ID does not match the MMM server ID.")
+        return "This command can only be used in the MMM server."
+    
+    guild = client.get_guild(global_vars.MMM_SERVER_ID)
+    top1_counts = defaultdict(int)
+    
+    current_time_utc7 = datetime.now(pytz.timezone('Asia/Bangkok'))
+    current_month_id = f"{current_time_utc7.year}{current_time_utc7.month:02d}"
+
+    docs = global_vars.db.collection("Leaderboard").stream()
+    for doc in docs:
+        if args.exclude and doc.id == current_month_id:
+            continue
+            
+        data = doc.to_dict()
+        msg_count = data.get("by_user", {})
+        is_sam = data.get("is_sam", False)
+        
+        extended = sorted(msg_count.items(), key=lambda x: x[1], reverse=True)[:20]
+        top_users = extended[:10]
+        if not top_users:
+            continue
+            
+        top_1_msg = top_users[0][1]
+        top_10_msg = top_users[9][1] if len(top_users) >= 10 else 0
+        
+        actual_top_1 = {int(top_users[0][0])}
+        for str_uid, count in top_users[1:]:
+            uid = int(str_uid)
+            if count == top_1_msg or (top_10_msg >= 1000 and count / top_1_msg >= 0.99):
+                actual_top_1.add(uid)
+                
+        if is_sam:
+            for uid in actual_top_1:
+                top1_counts[uid] += 2
+                
+            actual_top_2_3 = set()
+            if len(top_users) > 1 and int(top_users[1][0]) not in actual_top_1:
+                actual_top_2_3.add(int(top_users[1][0]))
+                
+            if len(top_users) > 2 and int(top_users[2][0]) not in actual_top_1:
+                top_3_msg = top_users[2][1]
+                actual_top_2_3.add(int(top_users[2][0]))
+                
+                for str_uid, count in top_users[3:]:
+                    uid = int(str_uid)
+                    if count == top_3_msg or (top_10_msg >= 1000 and count / top_3_msg >= 0.99):
+                        actual_top_2_3.add(uid)
+                        
+            for uid in actual_top_2_3:
+                top1_counts[uid] += 1
+        else:
+            for uid in actual_top_1:
+                top1_counts[uid] += 1
+
+    roles_map = {
+        12: guild.get_role(global_vars.TOP1_LEADERBOARD_12_TIMES_ROLE_ID),
+        6: guild.get_role(global_vars.TOP1_LEADERBOARD_6_TIMES_ROLE_ID),
+        3: guild.get_role(global_vars.TOP1_LEADERBOARD_3_TIMES_ROLE_ID),
+        1: guild.get_role(global_vars.TOP1_LEADERBOARD_ONCE_ROLE_ID),
+    }
+
+    roles_list = [roles_map[1], roles_map[3], roles_map[6], roles_map[12]]
+    if not all(roles_list):
+        return "Some leaderboard roles are missing in the server."
+
+    changed_members = 0
+    for member in guild.members:
+        if member.bot:
+            continue
+            
+        count = top1_counts.get(member.id, 0)
+        
+        expected_roles = set()
+        if count >= 12:
+            expected_roles.add(roles_map[12])
+        if count >= 6:
+            expected_roles.add(roles_map[6])
+        if count >= 3:
+            expected_roles.add(roles_map[3])
+        if count >= 1:
+            expected_roles.add(roles_map[1])
+            
+        roles_to_add = expected_roles - set(member.roles)
+        roles_to_remove = (set(roles_list) - expected_roles) & set(member.roles)
+        
+        if roles_to_add or roles_to_remove:
+            changed_members += 1
+            try:
+                if roles_to_add:
+                    await member.add_roles(*roles_to_add, reason="Leaderboard top 1 update")
+                    logger.VERBOSE(f"Added lb roles {[r.name for r in roles_to_add]} to {member.name}")
+                if roles_to_remove:
+                    await member.remove_roles(*roles_to_remove, reason="Leaderboard top 1 update")
+                    logger.VERBOSE(f"Removed lb roles {[r.name for r in roles_to_remove]} from {member.name}")
+            except discord.Forbidden:
+                logger.ERROR(f"Permission denied to change roles for {member.name}")
+            except discord.HTTPException as e:
+                logger.ERROR(f"HTTP Exception while changing roles for {member.name}: {e}")
+
+    logger.DEBUG(f"Leaderboard top counts: {dict(top1_counts)}")
+    return f"Leaderboard roles updated. Changes applied to {changed_members} members."
+
 COMMAND_MAP = {
     "help": help_command,
     "send": send_command,
@@ -756,6 +861,7 @@ COMMAND_MAP = {
     "anniversary": anniversary_command,
     "birthday": birthday_command,
     "leaderboard": leaderboard_command,
+    "lb-role": lb_role_command,
     "fix": fix_command,
     "prune": prune_command,
     "set-birthday": set_birthday_command,

@@ -83,7 +83,7 @@ subparser_map["set-birthday"] = set_birthday
 anniversary = subparsers.add_parser("anniversary", help="Check for anniversary and annouce", parents=[global_parser])
 subparser_map["anniversary"] = anniversary
 
-# --- leaderboard ---
+# --- index leaderboard ---
 index_lb = subparsers.add_parser("index-lb", help="Indexing leaderboard for selected month and year", parents=[global_parser])
 index_lb.add_argument("month", type=int, help="Month of the year")
 index_lb.add_argument("year", type=int, help="Year")
@@ -96,6 +96,11 @@ leaderboard.add_argument("month", type=int, help="Month of the year")
 leaderboard.add_argument("year", type=int, help="Year")
 leaderboard.add_argument("-s", "--sam-diff", default=0, type=int, help="Super Active Month difficulty")
 subparser_map["leaderboard"] = leaderboard
+
+# --- update leaderboard roles ---
+lb_role = subparsers.add_parser("lb-role", help="Update leaderboard roles", parents=[global_parser])
+lb_role.add_argument("-x", "--exclude", action="store_true", help="Exclude the current month")
+subparser_map["lb-role"] = lb_role
 
 # --- fix ---
 fix = subparsers.add_parser("fix", help="Fix member roles", parents=[global_parser])

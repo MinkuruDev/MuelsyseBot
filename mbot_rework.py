@@ -190,7 +190,6 @@ def format_output(success = False, reverse = False, mod_action = False, rate = 0
     return res
 
 async def muzzled(args):
-    you_gotta_move_role_id = 1440204182740144230
     reason = " ".join(args.reason) if args.reason else "No reason provided"
     guild = client.get_guild(args.guild)
     target = utils.get_member(guild, str(args.target))
@@ -207,14 +206,14 @@ async def muzzled(args):
             return format_output(True, True, False, 190.0, commander.id, reason="Are you trying to muzzled a mod?", **muzzle_result)
 
     # check if commander have you gotta move role
-    if you_gotta_move_role_id in [role.id for role in commander.roles]:
+    if global_vars.YOU_GOTTA_MOVE_ROLE_ID in [role.id for role in commander.roles]:
         # reverse effect
         muzzle_result = await timeout_with_rate(commander, 140.0, reason="You Gotta Move reverse effect")
         if muzzle_result is not None:
             return format_output(True, True, False, 140.0, commander.id, reason="You are the target for muzzled, not the commander", **muzzle_result)
     
     # Check if target not have You Gotta Move role
-    if not you_gotta_move_role_id in [role.id for role in target.roles]:
+    if not global_vars.YOU_GOTTA_MOVE_ROLE_ID in [role.id for role in target.roles]:
         return f"<@{target.id}> can't be muzzled."
 
     # get 12 recent messages from channel
@@ -278,10 +277,9 @@ async def deathmatch(args):
     commander = utils.get_member(client.get_guild(args.guild), str(args.member))
     if commander is None:
         return f"Commander: {args.member} not found"
-    you_gotta_move_role_id = 1440204182740144230
-    if you_gotta_move_role_id in [role.id for role in target.roles]:
+    if global_vars.YOU_GOTTA_MOVE_ROLE_ID in [role.id for role in target.roles]:
         return f"<@{target.id}> can't be challenged to deathmatch. They are already in You Gotta Move role"
-    if you_gotta_move_role_id in [role.id for role in commander.roles]:
+    if global_vars.YOU_GOTTA_MOVE_ROLE_ID in [role.id for role in commander.roles]:
         return f"<@{commander.id}> You can't challenge to deathmatch. You are already in You Gotta Move role"
     if target.guild_permissions.moderate_members:
         return f"<@{target.id}> is a moderator and can't be challenged to deathmatch"
@@ -330,7 +328,7 @@ async def deathmatch(args):
         winner = target
         loser = commander
     
-    a = mdo_parser.parse_str_command(f"mdo give-role {loser.id} {you_gotta_move_role_id} --duration {args.duration}")
+    a = mdo_parser.parse_str_command(f"mdo give-role {loser.id} {global_vars.YOU_GOTTA_MOVE_ROLE_ID} --duration {args.duration}")
     await mdo_rework.give_role_command(a)
     return f"**{winner.mention} wins the deathmatch!**\n<@{loser.id}> has been given You Gotta Move role for {args.duration}."
 

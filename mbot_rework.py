@@ -332,6 +332,89 @@ async def deathmatch(args):
     await mdo_rework.give_role_command(a)
     return f"**{winner.mention} wins the deathmatch!**\n<@{loser.id}> has been given You Gotta Move role for {args.duration}."
 
+async def russian_roulette(args):
+    duration = utils.parse_duration(args.duration)
+    if duration is None:
+        return f"Invalid duration: '{args.duration}'"
+    if duration <= 0:
+        return f"Duration must be greater than 0"
+    if duration > 69:
+        return f"Duration must be less than or equal to 69 seconds"
+
+    guild = client.get_guild(args.guild)
+    commander = utils.get_member(guild, str(args.member))
+    if commander is None:
+        return "Commander not found"
+        
+    if len(args.targets) > 5:
+        return "You can only challenge up to 5 other members"
+        
+    targets = []
+    for t in args.targets:
+        m = utils.get_member(guild, t)
+        if m is None:
+            return f"Target {t} not found"
+        if m in targets or m == commander:
+            return "Duplicate participants are not allowed"
+        targets.append(m)
+        
+    has_ygm = global_vars.YOU_GOTTA_MOVE_ROLE_ID in [role.id for role in commander.roles]
+    
+    if has_ygm:
+        if len(targets) != 1:
+            return "You have 'You gotta move' role, so you can only challenge exactly 1 other member in this game."
+        participants = [commander, targets[0], commander, commander, commander, commander]
+    else:
+        participants = [commander] + targets
+        
+    channel = client.get_channel(args.channel)
+    msg = "# RUSSIAN ROULETTE\nGame participants:\n"
+    for idx, p in enumerate(participants):
+        msg += f"**{idx + 1}**. <@{p.id}>\n"
+        
+    await channel.send(msg)
+    await asyncio.sleep(2)
+    
+    bullet_chamber = random.randint(1, 6)
+    current_chamber = random.randint(1, 6)
+    
+    await channel.send("The bullet is loaded. The cylinder is spun. Let the game begin!")
+    await asyncio.sleep(2)
+    
+    turn = 0
+    while True:
+        current_player = participants[turn % len(participants)]
+        msg = f"## Turn {turn + 1}\n"
+        msg += f"Current chamber: **{current_chamber}**\n"
+        msg += f"**{current_player.name}** places the gun to their head and pulls the trigger...\n"
+        await channel.send(msg)
+        await asyncio.sleep(2)
+        
+        if current_chamber == bullet_chamber:
+            final_msg = f"## BANG!\n"
+            
+            if current_player.guild_permissions.moderate_members:
+                final_msg += f"\n<@{current_player.id}> is a moderator and is immune to the timeout!"
+            else:
+                final_duration = duration
+                if global_vars.YOU_GOTTA_MOVE_ROLE_ID in [r.id for r in current_player.roles]:
+                    final_duration = int(duration * 3.6)
+                try:
+                    await current_player.timeout(timedelta(seconds=final_duration), reason="Shot in Russian Roulette")
+                    final_msg += f"\n<@{current_player.id}> has been timed out for {final_duration} seconds."
+                except Exception as e:
+                    final_msg += f"\nFailed to timeout <@{current_player.id}>: {str(e)}"
+            return final_msg
+        else:
+            msg_click = f"*click*. They pass the gun."
+            await channel.send(msg_click)
+            await asyncio.sleep(2)
+            
+            turn += 1
+            current_chamber += 1
+            if current_chamber > 6:
+                current_chamber = 1
+
 
 MBOT_COMMAND_MAP = {
     'help': help_command,
@@ -341,4 +424,5 @@ MBOT_COMMAND_MAP = {
     'ranking': ranking_command,
     'muzzled': muzzled,
     'deathmatch': deathmatch,
+    'russian-roulette': russian_roulette,
 }

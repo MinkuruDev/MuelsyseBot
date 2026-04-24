@@ -55,6 +55,12 @@ deathmatch.add_argument("-d", "--duration", type=str, default="3h", help="Durati
 deathmatch.add_argument("-r", "--round", type=int, default=3, help="Number of rounds for the deathmatch (must be odd, less than 10, default: 3)")
 subparser_map["deathmatch"] = deathmatch
 
+# --- russian-roulette ---
+russian_roulette = subparsers.add_parser("russian-roulette", help="Play russian roulette with up to 5 other members", parents=[global_parser])
+russian_roulette.add_argument("targets", nargs="+", help="Targets or target ids to play with (up to 5)")
+russian_roulette.add_argument("-d", "--duration", type=str, default="36s", help="Timeout duration in seconds (default: 36, max: 369)")
+subparser_map["russian-roulette"] = russian_roulette
+
 def get_help_command(command_name: str = None):
     """
     Get the help command for a specific command.

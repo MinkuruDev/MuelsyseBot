@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from discord import app_commands
 from firebase_admin import credentials, firestore
 from makisdk import MakiClientExtended
+from event_handler import MessageEventHandler
 
 load_dotenv()
 TOKEN = os.environ.get("TOKEN")
@@ -95,3 +96,6 @@ all_birthday_ref = db.collection("Birthday").document("AllBirthday")
 
 # logging
 logger : discord_log.DiscordLogger = None
+
+# Event Handler
+message_event = MessageEventHandler()

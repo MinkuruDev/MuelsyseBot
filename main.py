@@ -88,6 +88,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 async def on_message(message: discord.Message):
     if message.author == client.user or message.author.bot:
         return
+    await global_vars.message_event.invoke(message, global_vars.logger)
 
     if client.user.mentioned_in(message):
         pinged_channel = client.get_channel(global_vars.PING_CHANNEL_ID)

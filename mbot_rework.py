@@ -1,3 +1,4 @@
+import global_vars
 import asyncio
 import discord
 import mbot_parser
@@ -415,6 +416,115 @@ async def russian_roulette(args):
             if current_chamber > 6:
                 current_chamber = 1
 
+async def quick_draw(args):
+    duration = utils.parse_duration(args.duration)
+    if duration is None:
+        return f"Invalid duration: '{args.duration}'"
+    if duration <= 0:
+        return f"Duration must be greater than 0"
+    if duration > 3 * 24 * 3600:
+        return "Duraiton must be less than or equal to 3d"
+        
+    guild = client.get_guild(args.guild)
+    commander = utils.get_member(guild, str(args.member))
+    target = utils.get_member(guild, str(args.target))
+    
+    if global_vars.YOU_GOTTA_MOVE_ROLE_ID in [role.id for role in target.roles]:
+        return f"<@{target.id}> can't be challenged to quickdraw. They are already in You Gotta Move role"
+    if global_vars.YOU_GOTTA_MOVE_ROLE_ID in [role.id for role in commander.roles]:
+        return f"<@{commander.id}> You can't challenge to quickdraw. You are already in You Gotta Move role"
+
+    if commander is None:
+        return "Commander not found"
+    if target is None:
+        return f"Target {args.target} not found"
+        
+    if commander == target:
+        return "You can't challenge yourself!"
+        
+    channel = client.get_channel(args.channel)
+    q = asyncio.Queue()
+    
+    def listener(msg: discord.Message):
+        if msg.channel.id != args.channel:
+            return
+        if msg.author.id not in [commander.id, target.id]:
+            return
+        q.put_nowait(msg)
+        
+    global_vars.message_event.subscribe(listener)
+    
+    try:
+        # Phase 1: Wait for accept
+        await channel.send(f"<@{target.id}>, you have been challenged to a quick-draw match by <@{commander.id}>!\nSend any message here in 15 seconds to accept.")
+        
+        accepted = False
+        start_time = asyncio.get_event_loop().time()
+        while True:
+            time_left = 15.0 - (asyncio.get_event_loop().time() - start_time)
+            if time_left <= 0:
+                break
+            try:
+                msg = await asyncio.wait_for(q.get(), timeout=time_left)
+                if msg.author.id == target.id:
+                    accepted = True
+                    break
+            except asyncio.TimeoutError:
+                break
+                
+        if not accepted:
+            return f"Match cancelled. {target.mention} cowards out!"
+            
+        await channel.send("Challenge accepted. Match starts in 3 seconds! Get ready!")
+        await asyncio.sleep(3)
+        await channel.send("**The coin is thrown into the air...**\n(If you shoot before the coin lands, you lose!)")
+        
+        # Flush queue before floating starts just to discard accepted messages and banter during 3s prep
+        while not q.empty():
+            q.get_nowait()
+            
+        float_time = random.uniform(3.0, 10.0)
+        start_time = asyncio.get_event_loop().time()
+        
+        loser = None
+        winner = None
+        
+        # Phase 2: Floating coin / False start Check
+        while True:
+            time_left = float_time - (asyncio.get_event_loop().time() - start_time)
+            if time_left <= 0:
+                break
+            try:
+                msg = await asyncio.wait_for(q.get(), timeout=time_left)
+                loser = msg.author
+                winner = target if loser.id == commander.id else commander
+                await channel.send(f"**FALSE START!** {loser.mention} shot too early!")
+                break
+            except asyncio.TimeoutError:
+                break  # Finished floating without any false starts
+                
+        if loser is None:
+            await channel.send(f"## QUICKDRAW START!\n{commander.mention} vs {target.mention}\n**Send any message to do your shot!**")
+            
+            # Phase 3: Shoot
+            try:
+                # Wait up to 60 seconds for a shot
+                msg = await asyncio.wait_for(q.get(), timeout=60.0)
+                winner = msg.author
+                loser = target if winner.id == commander.id else commander
+            except asyncio.TimeoutError:
+                return "Nobody shot... match ended in a draw."
+                
+            await channel.send(f"{winner.mention} <:MumuGun:1170266682279862292> {loser.mention}!")
+            
+        # Give loser the role
+        give_role = mdo_parser.parse_str_command(f"mdo give-role {loser.id} {global_vars.YOU_GOTTA_MOVE_ROLE_ID} --duration {args.duration}")
+        await mdo_rework.give_role_command(give_role)
+        return f"{loser.mention} will bear the You Gotta Move role for {args.duration}."
+            
+    finally:
+        global_vars.message_event.unsubscribe(listener)
+
 
 MBOT_COMMAND_MAP = {
     'help': help_command,
@@ -425,4 +535,5 @@ MBOT_COMMAND_MAP = {
     'muzzled': muzzled,
     'deathmatch': deathmatch,
     'russian-roulette': russian_roulette,
+    'quick-draw': quick_draw,
 }

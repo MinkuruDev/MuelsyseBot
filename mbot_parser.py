@@ -61,6 +61,13 @@ russian_roulette.add_argument("targets", nargs="+", help="Targets or target ids 
 russian_roulette.add_argument("-d", "--duration", type=str, default="36s", help="Timeout duration in seconds (default: 36, max: 369)")
 subparser_map["russian-roulette"] = russian_roulette
 
+# --- quick-draw ---
+quick_draw= subparsers.add_parser("quick-draw", help="Challenge a member to a quickdraw match", parents=[global_parser])
+quick_draw.add_argument("target", help="Target or target id to challenge")
+quick_draw.add_argument("-d", "--duration", type=str, default="3h", help="Duration for the You gotta move role (e.g., 60m, 1d, 3h)")
+subparser_map["quick-draw"] = quick_draw
+
+
 def get_help_command(command_name: str = None):
     """
     Get the help command for a specific command.

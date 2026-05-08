@@ -3,3 +3,4 @@ __pycache__
 serviceAccountKey.json
 server_sftp_pass.txt
 .venv/
+test/

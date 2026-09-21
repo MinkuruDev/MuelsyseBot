@@ -138,6 +138,12 @@ give_role.add_argument("role", type=int, help="Role ID to give the role")
 give_role.add_argument("--duration", help="Duration to keep the role (e.g., 1h, 30m, 15s, 1d12h30m6s)")
 subparser_map["give-role"] = give_role
 
+# --- su ---
+su = subparsers.add_parser("su", help="Switch user and execute mbot command as that user", parents=[global_parser])
+su.add_argument("member", help="Member to switch to")
+su.add_argument("cmd", nargs=argparse.REMAINDER, help="Command to execute as the switched user")
+subparser_map["su"] = su
+
 def get_help_command(command_name: str = None):
     """
     Get the help command for a specific command.

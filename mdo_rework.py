@@ -6,6 +6,7 @@ import json
 import discord_log
 import io
 import mdo_commands
+import mbot_parser
 
 import re
 import discord
@@ -20,6 +21,7 @@ import totp
 from discord.ext import commands
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict
+from mbot_rework import MBOT_COMMAND_MAP
 
 birthday_data = {}
 client = global_vars.client
@@ -850,7 +852,34 @@ async def lb_role_command(args):
     logger.DEBUG(f"Leaderboard top counts: {dict(top1_counts)}")
     return f"Leaderboard roles updated. Changes applied to {changed_members} members."
 
+async def switch_user_command(args):
+    if args.guild != global_vars.MMM_SERVER_ID:
+        logger.ERROR("Guild ID does not match the MMM server ID.")
+        return "This command can only be used in the MMM server."
+    
+    guild = client.get_guild(global_vars.MMM_SERVER_ID)
+    member = utils.get_member(guild, args.member)
+    if not member:
+        logger.ERROR(f"Member {args.member} not found in guild {guild.name} (ID: {guild.id})")
+        return f"Member {args.member} not found"
+
+    mbot_str_command = " ".join(args.cmd) if args.cmd else "mbot help"
+    mbot_args = mbot_parser.parse_str_command(mbot_str_command)
+    mbot_args.member = member.id
+    mbot_args.guild = guild.id
+    mbot_args.channel = args.channel 
+    logger.VERBOSE(f"Switch-user command for member: {member} in guild: {guild.name} (ID: {guild.id}) with command: {mbot_str_command}")
+
+    if args.cmd[1] in MBOT_COMMAND_MAP:
+        command_func = MBOT_COMMAND_MAP[args.cmd[1]]
+        result = await command_func(mbot_args)
+        return result
+    else:
+        logger.ERROR(f"Unknown command {args.cmd[1]} for switch-user")
+        return f"Unknown command {args.cmd[1]} for switch-user"
+
 COMMAND_MAP = {
+    "su": switch_user_command,
     "help": help_command,
     "send": send_command,
     "edit": edit_command,

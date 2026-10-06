@@ -179,14 +179,14 @@ def format_output(success = False, reverse = False, mod_action = False, rate = 0
         res += ' (Mod action)'
     res += '\n'
 
-    res += f'<@{target_id}> has been timed out for {kwargs.get('duration', 0)} seconds\n'
-    res += f'**Reason**: {kwargs.get('reason', 'No reason provided')}\n'
+    res += f'<@{target_id}> has been timed out for {kwargs.get("duration", 0)} seconds\n'
+    res += f'**Reason**: {kwargs.get("reason", "No reason provided")}\n'
     res += f'**Timeout chance**: {rate:.2f}%\n' if not reverse else f'**Reverse change**: {rate:.2f}%\n'
     res += f'**Duration rarity**:\n'
-    res += f'- 369s: {kwargs.get('369_rate', 0.0):.2f}%\n'
-    res += f'- 36s: {kwargs.get('36_rate', 0.0):.2f}%\n'
-    res += f'- 6s: {kwargs.get('3_rate', 0.0):.2f}%\n'
-    res += f'- 3s: {kwargs.get('3_rate', 0.0):.2f}%\n'
+    res += f'- 369s: {kwargs.get("369_rate", 0.0):.2f}%\n'
+    res += f'- 36s: {kwargs.get("36_rate", 0.0):.2f}%\n'
+    res += f'- 6s: {kwargs.get("3_rate", 0.0):.2f}%\n'
+    res += f'- 3s: {kwargs.get("3_rate", 0.0):.2f}%\n'
 
     return res
 
@@ -270,6 +270,8 @@ async def deathmatch(args):
     seconds = utils.parse_duration(args.duration)
     if seconds is None:
         return "Invalid duration format. Use formats like '60m', '1d', '12h', etc."
+    if seconds <= 0:
+        return "Duration must be greater than 0"
     if seconds > 3 * 24 * 3600:
         return "Duration must be less than or equal to 3 days"
     target = utils.get_member(client.get_guild(args.guild), str(args.target))
@@ -442,6 +444,12 @@ async def quick_draw(args):
     if commander == target:
         return "You can't challenge yourself!"
         
+    async def easter_egg(niko, s1mple):
+        await channel.send(f"{niko.mention} <:DEagle:1556883309273948213> {s1mple.mention} (Missed shot!)")
+        await channel.send(f"{niko.mention} <:DEagle:1556883309273948213> {s1mple.mention} (Missed shot!)")
+        await channel.send(f"{niko.mention} <:DEagle:1556883309273948213> {s1mple.mention} (Missed shot!)")
+        await channel.send(f"{s1mple.mention} <:AWP:1556884316099715103> {niko.mention}!!!")
+    
     channel = client.get_channel(args.channel)
     q = asyncio.Queue()
     
@@ -477,7 +485,7 @@ async def quick_draw(args):
             
         await channel.send("Challenge accepted. Match starts in 3 seconds! Get ready!")
         await asyncio.sleep(3)
-        await channel.send("**The coin is thrown into the air...**\n(If you shoot before the coin lands, you lose!)")
+        await channel.send("**The coin is thrown into the air...**\n(If you send a message before signal, you lose!)")
         
         # Flush queue before floating starts just to discard accepted messages and banter during 3s prep
         while not q.empty():
@@ -488,6 +496,7 @@ async def quick_draw(args):
         
         loser = None
         winner = None
+        donked = False
         
         # Phase 2: Floating coin / False start Check
         while True:
@@ -498,28 +507,42 @@ async def quick_draw(args):
                 msg = await asyncio.wait_for(q.get(), timeout=time_left)
                 loser = msg.author
                 winner = target if loser.id == commander.id else commander
-                await channel.send(f"**FALSE START!** {loser.mention} shot too early!")
+                await easter_egg(loser, winner)
                 break
             except asyncio.TimeoutError:
                 break  # Finished floating without any false starts
                 
         if loser is None:
+            donked = False
             await channel.send(f"## QUICKDRAW START!\n{commander.mention} vs {target.mention}\n**Send any message to do your shot!**")
-            
+            start_time = asyncio.get_event_loop().time()
             # Phase 3: Shoot
             try:
                 # Wait up to 60 seconds for a shot
                 msg = await asyncio.wait_for(q.get(), timeout=60.0)
+                reaction_time = asyncio.get_event_loop().time() - start_time
+                if reaction_time < 0.36:
+                    donked = True
+                    duration *= 2
                 winner = msg.author
                 loser = target if winner.id == commander.id else commander
+                if not donked:
+                    if random.random() < 0.036:
+                        winner, loser = loser, winner
+                        await easter_egg(loser, winner)
             except asyncio.TimeoutError:
                 return "Nobody shot... match ended in a draw."
                 
-            await channel.send(f"{winner.mention} <:MumuGun:1170266682279862292> {loser.mention}!")
+            if donked:
+                await channel.send(f"{winner.mention} <:AK47:1556898469330034739> {loser.mention} (DONKED!)")
+            else:
+                await channel.send(f"{winner.mention} <:DEagle:1556883309273948213> {loser.mention}!")
             
         # Give loser the role
-        give_role = mdo_parser.parse_str_command(f"mdo give-role {loser.id} {global_vars.YOU_GOTTA_MOVE_ROLE_ID} --duration {args.duration}")
+        give_role = mdo_parser.parse_str_command(f"mdo give-role {loser.id} {global_vars.YOU_GOTTA_MOVE_ROLE_ID} --duration {duration}s")
         await mdo_rework.give_role_command(give_role)
+        if donked:
+            return f"{loser.mention} will bear the You Gotta Move role for 2 * {args.duration} (DONKED!)"
         return f"{loser.mention} will bear the You Gotta Move role for {args.duration}."
             
     finally:

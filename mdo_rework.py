@@ -878,6 +878,31 @@ async def switch_user_command(args):
         logger.ERROR(f"Unknown command {args.cmd[1]} for switch-user")
         return f"Unknown command {args.cmd[1]} for switch-user"
 
+async def fetch_msg_command(args):
+    source = utils.get_channel(args.source_channel)
+    if not source:
+        logger.ERROR(f"Channel {args.source_channel} not found")
+        return f"Channel {args.source_channel} not found"
+
+    after = discord.Object(id=args.after_id) if args.after_id else None
+    before = discord.Object(id=args.before_id) if args.before_id else None
+
+    lines = []
+    async for msg in source.history(limit=args.limit, after=after, before=before, oldest_first=True):
+        if msg.author.bot and not args.include_bots:
+            continue
+        content = " ".join(msg.content.split())  # flatten newlines/extra spaces -> one line
+        if not content:
+            continue  # skip attachment-only / empty messages
+        lines.append(f"{msg.author.id}: {content}")
+
+    logger.VERBOSE(f"Fetched {len(lines)} messages from channel {source.id}")
+    if not lines:
+        return "No messages found."
+
+    text = "\n".join(lines)
+    return f"```\n{text}\n```"
+
 COMMAND_MAP = {
     "su": switch_user_command,
     "help": help_command,
@@ -899,6 +924,7 @@ COMMAND_MAP = {
     "kick": kick_command,
     "ban": ban_command,
     "give-role": give_role_command,
+    "fetch-msg": fetch_msg_command,
 }
 
 REQUIRE_MFA = [

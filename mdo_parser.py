@@ -144,6 +144,15 @@ su.add_argument("member", help="Member to switch to")
 su.add_argument("cmd", nargs=argparse.REMAINDER, help="Command to execute as the switched user")
 subparser_map["su"] = su
 
+# --- fetch-msg ---
+fetch_msg = subparsers.add_parser("fetch-msg", help="Fetch messages of a channel as '<user_id>: <message>' lines", parents=[global_parser])
+fetch_msg.add_argument("source_channel", help="Channel or channel ID to fetch messages from")
+fetch_msg.add_argument("-l", "--limit", type=int, default=200, help="Max number of messages to fetch (default 200)")
+fetch_msg.add_argument("--after-id", type=int, default=None, help="Only fetch messages after this message ID")
+fetch_msg.add_argument("--before-id", type=int, default=None, help="Only fetch messages before this message ID")
+fetch_msg.add_argument("--include-bots", action="store_true", help="Also include messages sent by bots")
+subparser_map["fetch-msg"] = fetch_msg
+
 def get_help_command(command_name: str = None):
     """
     Get the help command for a specific command.
